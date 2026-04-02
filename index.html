@@ -3,338 +3,484 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceituna Survivors</title>
+    <title>Aceituna Survivors DELUXE</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #2c3e50; /* Fondo oscuro */
+            background-color: #1a1a1a;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Courier New', Courier, monospace; /* Fuente retro */
             overflow: hidden;
             color: white;
+            user-select: none;
         }
         #game-container {
             position: relative;
+            border: 6px solid #ffd700; /* Borde dorado */
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
         }
         canvas {
-            background-color: #8FBC8F; /* Suelo verde tapete */
-            border: 4px solid #1a252f;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background-color: #83a95c; /* Verde oliva base */
+            display: block;
         }
-        #ui {
+        #ui-layer {
             position: absolute;
-            top: 15px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0px #000;
-            pointer-events: none; /* Para que no interfiera con el ratón */
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex; flex-direction: column;
+            padding: 15px; box-sizing: border-box;
+            z-index: 10;
         }
-        #exp-bar-container {
+        /* Barras de UI */
+        .bar-container { width: 250px; height: 16px; background: #333; border: 2px solid #000; margin-bottom: 5px; position: relative; }
+        .bar-fill { height: 100%; transition: width 0.1s ease-out; }
+        #hp-bar { background-color: #ff3333; width: 100%; }
+        #exp-bar { background-color: #ffd700; width: 0%; }
+        .level-text { font-size: 22px; font-weight: bold; color: #ffd700; text-shadow: 2px 2px 0 #000; }
+
+        /* Menú de Subida de Nivel */
+        #upgrade-menu {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 10px;
-            background-color: #333;
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            display: none; /* Oculto por defecto */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
         }
-        #exp-bar {
-            width: 0%;
-            height: 100%;
-            background-color: #FFD700; /* Oro/Aceite */
-            transition: width 0.2s;
-            border-top-left-radius: 6px;
+        #upgrade-menu h2 { font-size: 36px; color: #ffd700; margin-bottom: 30px; text-shadow: 3px 3px 0 #000; }
+        .upgrade-option {
+            background: #2c3e50; border: 3px solid #ffd700; border-radius: 8px;
+            width: 80%; max-width: 400px; padding: 15px; margin: 10px;
+            cursor: pointer; transition: transform 0.1s, background 0.2s;
+            display: flex; align-items: center; text-align: left;
+        }
+        .upgrade-option:hover { background: #3e5871; transform: scale(1.03); }
+        .upgrade-icon { font-size: 30px; margin-right: 20px; width: 40px; text-align: center; }
+        .upgrade-title { font-size: 20px; font-weight: bold; color: white; margin-bottom: 3px; }
+        .upgrade-desc { font-size: 14px; color: #bdc3c7; }
+
+        #game-over-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(139, 0, 0, 0.7); display: none;
+            flex-direction: column; justify-content: center; align-items: center; z-index: 200;
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="exp-bar-container"><div id="exp-bar"></div></div>
-    <div id="ui">
-        <div>Nivel: <span id="level">1</span></div>
-        <div>Salud: <span id="hp">100</span></div>
+    <div id="ui-layer">
+        <div class="bar-container"><div id="hp-bar" class="bar-fill"></div></div>
+        <div class="bar-container"><div id="exp-bar" class="bar-fill"></div></div>
+        <div class="level-text">NIVEL: <span id="level-val">1</span></div>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div id="upgrade-menu">
+        <h2>¡MEJORA TU ACEITUNA!</h2>
+        <div id="upgrade-list">
+            </div>
+    </div>
+
+    <div id="game-over-screen">
+        <h1 style="font-size: 60px; text-shadow: 4px 4px 0 #000;">HAS SIDO COMIDO</h1>
+        <p style="font-size: 20px;">Recarga la página (F5) para intentarlo de nuevo.</p>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="650"></canvas>
 </div>
 
 <script>
+    // --- CONFIGURACIÓN Y ESTILO ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
-    // UI Elements
-    const hpElement = document.getElementById('hp');
-    const levelElement = document.getElementById('level');
-    const expBarElement = document.getElementById('exp-bar');
+    const ui = {
+        hp: document.getElementById('hp-bar'),
+        exp: document.getElementById('exp-bar'),
+        level: document.getElementById('level-val'),
+        menu: document.getElementById('upgrade-menu'),
+        upgradeList: document.getElementById('upgrade-list'),
+        gameOver: document.getElementById('game-over-screen')
+    };
 
-    // Variables de estado
-    let isGameOver = false;
+    const palette = {
+        olive: '#6B8E23', oliveDark: '#4A6318', pepper: '#FF3333', pepperDark: '#A30000',
+        bone: '#F0E68C', wood: '#CD853F', woodDark: '#8B4513', oil: '#FFD700', white: '#FFFFFF', black: '#000000'
+    };
+
     let frames = 0;
-    
-    // Controles
-    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false };
+    let isGameOver = false;
+    let isPaused = false;
+    const keys = { w: false, a: false, s: false, d: false };
 
-    window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
-    window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+    window.addEventListener('keydown', e => { if (e.key in keys) keys[e.key] = true; });
+    window.addEventListener('keyup', e => { if (e.key in keys) keys[e.key] = false; });
+
+    // --- BASE DE DATOS DE MEJORAS ---
+    const UPGRADES_DB = [
+        { id: 'multishot', title: 'Huesos Múltiples', desc: 'Dispara +1 hueso adicional en abanico.', icon: '🏹', type: 'combat', max: 5 },
+        { id: 'speed', title: 'Aceite de Carreras', desc: 'Aumenta un 15% tu velocidad de vuelo.', icon: '⚡️', type: 'stats', max: 10 },
+        { id: 'damage', title: 'Huesos Afilados', desc: '+20% Daño y atraviesan un enemigo extra.', icon: '💥', type: 'combat', max: 8 },
+        { id: 'shield', title: 'Escudo de Anchoa', desc: 'Una anchoa orbita defendiéndote.', icon: '🛡️', type: 'def', max: 3 },
+        { id: 'regen', title: 'Relleno Regenerativo', desc: 'Cura 1 HP cada 2 segundos.', icon: '🩸', type: 'def', max: 5 }
+    ];
 
     // --- ENTIDADES ---
 
     const player = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: 20,
-        speed: 3,
-        hp: 100,
-        maxHp: 100,
-        level: 1,
-        exp: 0,
-        expToNextLevel: 10,
-        fireRate: 60, // Dispara cada 60 frames (1 seg aprox)
+        x: canvas.width / 2, y: canvas.height / 2,
+        radius: 20, speed: 3.5, hp: 100, maxHp: 100,
+        level: 1, exp: 0, expToNext: 15,
+        fireRate: 50, multishot: 1, pierce: 0, shieldCount: 0, regenLevel: 0,
         
         draw() {
-            // Cuerpo aceituna
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#6B8E23';
-            ctx.fill();
-            ctx.strokeStyle = '#4A6318';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            // Pimiento
-            ctx.beginPath();
-            ctx.arc(this.x, this.y - 5, 8, 0, Math.PI * 2);
-            ctx.fillStyle = '#FF3333';
-            ctx.fill();
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // Efecto de inclinación leve al moverse
+            if(keys.a) ctx.rotate(-0.1);
+            if(keys.d) ctx.rotate(0.1);
+
+            // Contorno grueso (estilo dibujo)
+            ctx.beginPath(); ctx.arc(0, 0, this.radius + 2, 0, Math.PI*2); ctx.fillStyle = palette.black; ctx.fill();
+
+            // Cuerpo Aceituna
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = palette.olive; ctx.fill();
+            
+            // Pimiento (arriba)
+            ctx.beginPath(); ctx.arc(0, -6, 9, 0, Math.PI * 2); ctx.fillStyle = palette.pepper; ctx.fill();
+            ctx.beginPath(); ctx.arc(0, -6, 4, 0, Math.PI * 2); ctx.fillStyle = palette.pepperDark; ctx.fill();
+
+            // Ojos
+            ctx.fillStyle = palette.white;
+            ctx.beginPath(); ctx.arc(-7, 2, 5, 0, Math.PI*2); ctx.fill(); // Izq
+            ctx.beginPath(); ctx.arc(7, 2, 5, 0, Math.PI*2); ctx.fill(); // Der
+            ctx.fillStyle = palette.black;
+            let lookX = keys.d ? 2 : (keys.a ? -2 : 0);
+            ctx.beginPath(); ctx.arc(-7 + lookX, 2, 2.5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(7 + lookX, 2, 2.5, 0, Math.PI*2); ctx.fill();
+
+            ctx.restore();
+
+            // Dibujar Escudos de Anchoa si tiene
+            if(this.shieldCount > 0) anchoaShield.draw();
         },
         
         update() {
-            // Movimiento
-            if ((keys.w || keys.ArrowUp) && this.y - this.radius > 0) this.y -= this.speed;
-            if ((keys.s || keys.ArrowDown) && this.y + this.radius < canvas.height) this.y += this.speed;
-            if ((keys.a || keys.ArrowLeft) && this.x - this.radius > 0) this.x -= this.speed;
-            if ((keys.d || keys.ArrowRight) && this.x + this.radius < canvas.width) this.x += this.speed;
+            let dx = 0; let dy = 0;
+            if (keys.w && this.y - this.radius > 0) dy -= this.speed;
+            if (keys.s && this.y + this.radius < canvas.height) dy += this.speed;
+            if (keys.a && this.x - this.radius > 0) dx -= this.speed;
+            if (keys.d && this.x + this.radius < canvas.width) dx += this.speed;
+            
+            // Normalizar velocidad diagonal
+            if(dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
+            this.x += dx; this.y += dy;
 
             // Auto-Disparo
-            if (frames % this.fireRate === 0 && enemies.length > 0) {
-                this.shootClosestEnemy();
+            if (frames % this.fireRate === 0 && enemies.length > 0) this.shoot();
+
+            // Regeneración
+            if(this.regenLevel > 0 && frames % 120 === 0 && this.hp < this.maxHp) {
+                this.hp = Math.min(this.maxHp, this.hp + this.regenLevel);
+                updateUI();
             }
+
+            if(this.shieldCount > 0) anchoaShield.update();
         },
 
-        shootClosestEnemy() {
-            let closestEnemy = null;
-            let minDistance = Infinity;
-
-            // Buscar enemigo más cercano
-            enemies.forEach(enemy => {
-                let dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    closestEnemy = enemy;
-                }
+        shoot() {
+            let closestEn = null; let minD = Infinity;
+            enemies.forEach(e => {
+                let d = Math.hypot(this.x - e.x, this.y - e.y);
+                if (d < minD) { minD = d; closestEn = e; }
             });
 
-            if (closestEnemy) {
-                let angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
-                projectiles.push(new Projectile(this.x, this.y, angle));
+            if (closestEn) {
+                let baseAngle = Math.atan2(closestEn.y - this.y, closestEn.x - this.x);
+                let spread = 0.2; // Ángulo entre disparos multishot
+
+                for(let i=0; i<this.multishot; i++){
+                    // Calcular ángulo para cada hueso (abanico)
+                    let angle = baseAngle + (i - (this.multishot-1)/2) * spread;
+                    projectiles.push(new Projectile(this.x, this.y, angle, this.pierce));
+                }
             }
         },
 
         gainExp(amount) {
             this.exp += amount;
-            if (this.exp >= this.expToNextLevel) {
-                this.levelUp();
+            if (this.exp >= this.expToNext) {
+                triggerLevelUp();
             }
-            expBarElement.style.width = `${(this.exp / this.expToNextLevel) * 100}%`;
-        },
-
-        levelUp() {
-            this.exp -= this.expToNextLevel;
-            this.level++;
-            this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
-            levelElement.innerText = this.level;
-            
-            // Mejora: Dispara más rápido al subir de nivel (mínimo cada 10 frames)
-            if (this.fireRate > 10) this.fireRate -= 5;
-            
-            // Curarse un poco al subir de nivel
-            this.hp = Math.min(this.maxHp, this.hp + 20);
-            hpElement.innerText = this.hp;
+            updateUI();
         }
     };
 
-    class Projectile {
-        constructor(x, y, angle) {
-            this.x = x;
-            this.y = y;
-            this.speed = 8;
-            this.radius = 5;
-            this.dx = Math.cos(angle) * this.speed;
-            this.dy = Math.sin(angle) * this.speed;
-            this.life = 100; // Desaparece tras X frames si no choca
-        }
-
+    // --- SISTEMA DE ESCUDO ---
+    const anchoaShield = {
+        angle: 0,
+        update() { this.angle += 0.05; },
         draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#EEDD82'; // Color hueso
-            ctx.fill();
-        }
+            let dist = 55; // Distancia de la aceituna
+            for(let i=0; i<player.shieldCount; i++){
+                let currentAngle = this.angle + (i * (Math.PI*2 / player.shieldCount));
+                let x = player.x + Math.cos(currentAngle) * dist;
+                let y = player.y + Math.sin(currentAngle) * dist;
 
-        update() {
-            this.x += this.dx;
-            this.y += this.dy;
-            this.life--;
+                // Dibujar Anchoa (Sprite simple)
+                ctx.save();
+                ctx.translate(x,y); ctx.rotate(currentAngle + Math.PI/2);
+                ctx.fillStyle = '#7f8c8d'; // Gris pescado
+                ctx.beginPath(); ctx.ellipse(0,0, 6, 15, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#34495e'; // Detalle oscuro
+                ctx.beginPath(); ctx.ellipse(0,4, 3, 10, 0, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+
+                // Colisión del escudo con enemigos
+                enemies.forEach((e, index) => {
+                    if(Math.hypot(x-e.x, y-e.y) < e.radius + 8){
+                        spawnGem(e.x, e.y);
+                        enemies.splice(index, 1); // Mata instantáneamente
+                    }
+                })
+            }
         }
+    }
+
+    class Projectile {
+        constructor(x, y, angle, pierce) {
+            this.x = x; this.y = y; this.angle = angle;
+            this.speed = 7; this.radius = 6;
+            this.dx = Math.cos(angle) * this.speed; this.dy = Math.sin(angle) * this.speed;
+            this.pierce = pierce; // Cuántos enemigos puede atravesar
+            this.enemiesHit = []; // Para no golpear al mismo enemigo dos veces
+        }
+        draw() {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+            // Contorno
+            ctx.fillStyle = palette.black; ctx.beginPath(); ctx.arc(0,0, this.radius+1.5, 0, Math.PI*2); ctx.fill();
+            // Hueso (ovalado)
+            ctx.fillStyle = palette.bone; ctx.beginPath(); ctx.ellipse(0, 0, this.radius, this.radius*1.8, 0, 0, Math.PI*2); ctx.fill();
+            // Detalle oscuro
+            ctx.fillStyle = '#b5ab5f'; ctx.beginPath(); ctx.arc(0, -3, 2, 0, Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+        update() { this.x += this.dx; this.y += this.dy; }
     }
 
     class Enemy {
         constructor() {
-            // Aparecen en los bordes
-            let side = Math.floor(Math.random() * 4);
-            if (side === 0) { this.x = Math.random() * canvas.width; this.y = -30; } // Arriba
-            else if (side === 1) { this.x = canvas.width + 30; this.y = Math.random() * canvas.height; } // Derecha
-            else if (side === 2) { this.x = Math.random() * canvas.width; this.y = canvas.height + 30; } // Abajo
-            else { this.x = -30; this.y = Math.random() * canvas.height; } // Izquierda
-
-            this.radius = 12;
-            this.speed = Math.random() * 0.5 + 0.5; // Velocidad entre 0.5 y 1.0
-            this.hp = 1;
+            // Spawn fuera de pantalla
+            if (Math.random() < 0.5) {
+                this.x = Math.random() < 0.5 ? -40 : canvas.width + 40; this.y = Math.random() * canvas.height;
+            } else {
+                this.x = Math.random() * canvas.width; this.y = Math.random() < 0.5 ? -40 : canvas.height + 40;
+            }
+            this.radius = 10; this.speed = 0.8 + (player.level * 0.05); // Escala con nivel
+            this.wiggle = Math.random() * 100; // Para animación de movimiento
         }
-
         draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#8B4513'; // Color palillo/enemigo
-            ctx.fill();
-            ctx.strokeStyle = '#5c2e0b';
-            ctx.stroke();
-        }
-
-        update() {
-            // Perseguir al jugador
+            this.wiggle += 0.2;
+            ctx.save(); ctx.translate(this.x, this.y);
+            // Rotar hacia el jugador + un pequeño "bamboleo"
             let angle = Math.atan2(player.y - this.y, player.x - this.x);
-            this.x += Math.cos(angle) * this.speed;
-            this.y += Math.sin(angle) * this.speed;
+            ctx.rotate(angle + Math.sin(this.wiggle)*0.15);
+
+            // Dibujar Palillo
+            // Contorno
+            ctx.fillStyle = palette.black; ctx.fillRect(-16, -2.5, 32, 5);
+            // Madera base
+            ctx.fillStyle = palette.wood; ctx.fillRect(-15, -1.5, 30, 3);
+            // Punta Roja afilada (mirando al jugador)
+            ctx.fillStyle = palette.pepper; ctx.beginPath(); ctx.moveTo(15, -1.5); ctx.lineTo(22, 0); ctx.lineTo(15, 1.5); ctx.fill();
+            ctx.restore();
+        }
+        update() {
+            let angle = Math.atan2(player.y - this.y, player.x - this.x);
+            this.x += Math.cos(angle) * this.speed; this.y += Math.sin(angle) * this.speed;
         }
     }
 
     class Gem {
-        constructor(x, y) {
-            this.x = x;
-            this.y = y;
-            this.radius = 4;
-        }
+        constructor(x, y) { this.x = x; this.y = y; this.radius = 5; this.bob = Math.random()*10; }
         draw() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#FFD700'; // Gota de aceite
-            ctx.fill();
+            this.bob += 0.1;
+            let yOffset = Math.sin(this.bob) * 2;
+            // Brillo
+            ctx.shadowColor = palette.oil; ctx.shadowBlur = 10;
+            // Contorno
+            ctx.fillStyle = palette.black; ctx.beginPath(); ctx.arc(this.x, this.y + yOffset, this.radius+1.5, 0, Math.PI*2); ctx.fill();
+            // Gota de Aceite
+            ctx.fillStyle = palette.oil; ctx.beginPath(); ctx.moveTo(this.x, this.y-9 + yOffset);
+            ctx.bezierCurveTo(this.x+6, this.y-3 + yOffset, this.x+6, this.y+4 + yOffset, this.x, this.y+5 + yOffset);
+            ctx.bezierCurveTo(this.x-6, this.y+4 + yOffset, this.x-6, this.y-3 + yOffset, this.x, this.y-9 + yOffset); ctx.fill();
+            ctx.shadowBlur = 0; // Reset
         }
     }
 
-    // Listas de entidades
-    let projectiles = [];
-    let enemies = [];
-    let gems = [];
+    // --- LOGICA CENTRAL ---
+    let projectiles = []; let enemies = []; let gems = [];
 
-    // Generador de enemigos (aumenta la dificultad con el tiempo)
+    function updateUI() {
+        ui.hp.style.width = (player.hp / player.maxHp * 100) + '%';
+        ui.exp.style.width = (player.exp / player.expToNext * 100) + '%';
+        ui.level.innerText = player.level;
+    }
+
     function spawnEnemies() {
-        let spawnRate = Math.max(10, 60 - Math.floor(frames / 300)); // Aparecen más rápido con el tiempo
-        if (frames % spawnRate === 0) {
-            enemies.push(new Enemy());
+        let spawnRate = Math.max(10, 70 - (player.level * 3)); // Más rápido con el nivel
+        if (frames % spawnRate === 0) enemies.push(new Enemy());
+    }
+
+    function spawnGem(x,y) { gems.push(new Gem(x,y)); }
+
+    // --- SISTEMA DE UPGRADES ---
+    function triggerLevelUp() {
+        isPaused = true;
+        player.exp -= player.expToNext;
+        player.level++;
+        player.expToNext = Math.floor(player.expToNext * 1.4);
+        
+        // Curar un poco
+        player.hp = Math.min(player.maxHp, player.hp + 10);
+        updateUI();
+
+        showUpgradeMenu();
+    }
+
+    function showUpgradeMenu() {
+        ui.upgradeList.innerHTML = ''; // Limpiar
+        ui.menu.style.display = 'flex';
+
+        // Obtener 3 mejoras aleatorias únicas que no hayan llegado al max
+        let available = UPGRADES_DB.filter(u => {
+            if(u.id === 'multishot' && player.multishot >= u.max) return false;
+            if(u.id === 'speed' && player.speed >= 6) return false;
+            if(u.id === 'shield' && player.shieldCount >= u.max) return false;
+            if(u.id === 'regen' && player.regenLevel >= u.max) return false;
+            if(u.id === 'damage' && player.pierce >= u.max) return false;
+            return true;
+        });
+
+        // Mezclar y pillar 3
+        let shuffled = available.sort(() => 0.5 - Math.random());
+        let selected = shuffled.slice(0, 3);
+
+        selected.forEach(upg => {
+            const card = document.createElement('div');
+            card.className = 'upgrade-option';
+            card.innerHTML = `
+                <div class="upgrade-icon">${upg.icon}</div>
+                <div>
+                    <div class="upgrade-title">${upg.title}</div>
+                    <div class="upgrade-desc">${upg.desc}</div>
+                </div>
+            `;
+            card.onclick = () => applyUpgrade(upg.id);
+            ui.upgradeList.appendChild(card);
+        });
+    }
+
+    function applyUpgrade(upgradeId) {
+        switch(upgradeId) {
+            case 'multishot': player.multishot++; player.fireRate = Math.max(20, player.fireRate + 5); break; // Más balas, baja algo el rate
+            case 'speed': player.speed *= 1.15; break;
+            case 'damage': player.pierce++; break;
+            case 'shield': player.shieldCount++; break;
+            case 'regen': player.regenLevel++; break;
+        }
+        
+        ui.menu.style.display = 'none';
+        isPaused = false;
+        requestAnimationFrame(gameLoop); // Re-arrancar bucle
+    }
+
+    // --- LOOP PRINCIPAL Y DIBUJO ---
+    function drawBackground() {
+        // Suelo verde oliva
+        ctx.fillStyle = palette.olive; ctx.fillRect(0,0, canvas.width, canvas.height);
+        // Patrón de lunares retro (mantel de bar)
+        ctx.fillStyle = '#7a9e54'; // Un verde ligeramente distinto
+        for(let x=0; x<canvas.width; x+=40){
+            for(let y=0; y<canvas.height; y+=40){
+                ctx.beginPath(); ctx.arc(x + (y%80===0?20:0), y, 3, 0, Math.PI*2); ctx.fill();
+            }
         }
     }
 
-    // Comprobación de colisiones (Círculos)
     function checkCollisions() {
         // Proyectiles vs Enemigos
         for (let i = projectiles.length - 1; i >= 0; i--) {
+            let p = projectiles[i];
             for (let j = enemies.length - 1; j >= 0; j--) {
-                let p = projectiles[i];
                 let e = enemies[j];
-                if (!p || !e) continue;
+                if(p.enemiesHit.includes(e)) continue; // Ya golpeado
 
-                let dist = Math.hypot(p.x - e.x, p.y - e.y);
-                if (dist < p.radius + e.radius) {
-                    // El enemigo muere
-                    gems.push(new Gem(e.x, e.y)); // Suelta experiencia
+                if (Math.hypot(p.x - e.x, p.y - e.y) < p.radius + e.radius) {
+                    spawnGem(e.x, e.y);
                     enemies.splice(j, 1);
-                    projectiles.splice(i, 1);
-                    break;
+                    
+                    p.enemiesHit.push(e);
+                    if(p.enemiesHit.length > p.pierce) { // Si no perfora más, muere
+                        projectiles.splice(i, 1);
+                        break; 
+                    }
                 }
             }
         }
 
-        // Jugador vs Gemas (Recoger EXP)
-        for (let i = gems.length - 1; i >= 0; i--) {
-            let g = gems[i];
-            // Distancia de recogida (imán)
-            let dist = Math.hypot(player.x - g.x, player.y - g.y);
-            if (dist < player.radius + 30) { 
-                player.gainExp(1);
-                gems.splice(i, 1);
+        // Imán de gemas (más fuerte si estás cerca)
+        gems.forEach((g, index) => {
+            let d = Math.hypot(player.x - g.x, player.y - g.y);
+            if(d < 100){ // Rango imán
+                let spd = 4 * (1 - d/100) + 1; // Más rápido cuanto más cerca
+                let angle = Math.atan2(player.y - g.y, player.x - g.x);
+                g.x += Math.cos(angle) * spd; g.y += Math.sin(angle) * spd;
             }
-        }
+            if (d < player.radius + g.radius) { 
+                player.gainExp(1); gems.splice(index, 1); 
+            }
+        });
 
-        // Jugador vs Enemigos (Daño)
-        enemies.forEach(enemy => {
-            let dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-            if (dist < player.radius + enemy.radius) {
-                player.hp -= 0.5; // Daño constante si te tocan
-                hpElement.innerText = Math.floor(player.hp);
-                if (player.hp <= 0) isGameOver = true;
+        // Daño al jugador (Inmune brevemente tras daño no implementado por simplicidad, daño por frame bajo)
+        enemies.forEach(e => {
+            if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius) {
+                player.hp -= 0.3; // Daño continuo
+                updateUI();
+                if (player.hp <= 0 && !isGameOver) { isGameOver = true; ui.gameOver.style.display = 'flex'; }
             }
         });
     }
 
-    // --- BUCLE PRINCIPAL ---
     function gameLoop() {
-        if (isGameOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 40px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('FIN DE LA PARTIDA', canvas.width / 2, canvas.height / 2);
-            ctx.font = '20px Arial';
-            ctx.fillText(`Llegaste al Nivel ${player.level}`, canvas.width / 2, canvas.height / 2 + 40);
-            ctx.fillText('Recarga la página para volver a intentar', canvas.width / 2, canvas.height / 2 + 80);
-            return;
-        }
+        if (isGameOver || isPaused) return;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        player.update();
-        player.draw();
+        drawBackground();
 
         spawnEnemies();
 
-        // Actualizar y dibujar entidades
-        gems.forEach(gem => gem.draw());
-
-        projectiles.forEach((p, index) => {
-            p.update();
-            p.draw();
-            // Eliminar proyectiles viejos o que salen de la pantalla
-            if (p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                projectiles.splice(index, 1);
-            }
+        // Orden de dibujo: suelo > gemas > enemigos > proyectiles > jugador > escudos
+        gems.forEach(g => g.draw());
+        
+        projectiles.forEach((p, i) => { 
+            p.update(); p.draw(); 
+            if(p.x<0 || p.x>canvas.width || p.y<0 || p.y>canvas.height) projectiles.splice(i,1); 
         });
-
-        enemies.forEach(enemy => {
-            enemy.update();
-            enemy.draw();
-        });
+        
+        enemies.forEach(e => { e.update(); e.draw(); });
+        
+        player.update();
+        player.draw();
 
         checkCollisions();
 
@@ -342,9 +488,10 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // Iniciar
+    // --- INICIO ---
+    updateUI();
     gameLoop();
-</script>
 
+</script>
 </body>
 </html>
