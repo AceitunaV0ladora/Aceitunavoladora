@@ -3,226 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>La Aceituna Voladora</title>
+    <title>Aceituna Survivors</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #87CEEB; /* Cielo azul */
+            background-color: #2c3e50; /* Fondo oscuro */
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
+            color: white;
         }
         #game-container {
             position: relative;
         }
         canvas {
-            background-color: #f0f8ff;
-            border: 4px solid #333;
+            background-color: #8FBC8F; /* Suelo verde tapete */
+            border: 4px solid #1a252f;
             border-radius: 10px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         #ui {
             position: absolute;
-            top: 20px;
+            top: 15px;
             left: 20px;
-            font-size: 24px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
             font-weight: bold;
-            color: #333;
-            z-index: 10;
+            text-shadow: 2px 2px 0px #000;
+            pointer-events: none; /* Para que no interfiera con el ratón */
+        }
+        #exp-bar-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #333;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
+        #exp-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #FFD700; /* Oro/Aceite */
+            transition: width 0.2s;
+            border-top-left-radius: 6px;
         }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <div id="ui">Puntuación: <span id="score">0</span></div>
-    <canvas id="gameCanvas" width="400" height="500"></canvas>
+    <div id="exp-bar-container"><div id="exp-bar"></div></div>
+    <div id="ui">
+        <div>Nivel: <span id="level">1</span></div>
+        <div>Salud: <span id="hp">100</span></div>
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const scoreElement = document.getElementById('score');
+    
+    // UI Elements
+    const hpElement = document.getElementById('hp');
+    const levelElement = document.getElementById('level');
+    const expBarElement = document.getElementById('exp-bar');
 
-    // Variables globales del sistema
-    let frames = 0;
-    let score = 0;
+    // Variables de estado
     let isGameOver = false;
+    let frames = 0;
+    
+    // Controles
+    const keys = { w: false, a: false, s: false, d: false, ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false };
 
-    // Objeto: La Aceituna
-    const aceituna = {
-        x: 80,
-        y: 150,
-        radius: 15,
-        velocity: 0,
-        gravity: 0.3, // Fuerza con la que cae
-        jump: -6,     // Fuerza con la que salta
+    window.addEventListener('keydown', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = true; });
+    window.addEventListener('keyup', e => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+
+    // --- ENTIDADES ---
+
+    const player = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 20,
+        speed: 3,
+        hp: 100,
+        maxHp: 100,
+        level: 1,
+        exp: 0,
+        expToNextLevel: 10,
+        fireRate: 60, // Dispara cada 60 frames (1 seg aprox)
         
         draw() {
-            // Dibujar el cuerpo verde de la aceituna
+            // Cuerpo aceituna
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = '#6B8E23'; // Verde oliva
+            ctx.fillStyle = '#6B8E23';
             ctx.fill();
             ctx.strokeStyle = '#4A6318';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.stroke();
-            ctx.closePath();
-            
-            // Dibujar el relleno de pimiento rojo
+            // Pimiento
             ctx.beginPath();
-            ctx.arc(this.x + 6, this.y, 6, 0, Math.PI * 2);
+            ctx.arc(this.x, this.y - 5, 8, 0, Math.PI * 2);
             ctx.fillStyle = '#FF3333';
             ctx.fill();
-            ctx.closePath();
         },
         
         update() {
-            // Aplicar gravedad
-            this.velocity += this.gravity;
-            this.y += this.velocity;
+            // Movimiento
+            if ((keys.w || keys.ArrowUp) && this.y - this.radius > 0) this.y -= this.speed;
+            if ((keys.s || keys.ArrowDown) && this.y + this.radius < canvas.height) this.y += this.speed;
+            if ((keys.a || keys.ArrowLeft) && this.x - this.radius > 0) this.x -= this.speed;
+            if ((keys.d || keys.ArrowRight) && this.x + this.radius < canvas.width) this.x += this.speed;
 
-            // Colisión con el suelo
-            if (this.y + this.radius >= canvas.height) {
-                this.y = canvas.height - this.radius;
-                isGameOver = true;
-            }
-            // Colisión con el techo
-            if (this.y - this.radius <= 0) {
-                this.y = this.radius;
-                this.velocity = 0;
+            // Auto-Disparo
+            if (frames % this.fireRate === 0 && enemies.length > 0) {
+                this.shootClosestEnemy();
             }
         },
-        
-        flap() {
-            this.velocity = this.jump;
+
+        shootClosestEnemy() {
+            let closestEnemy = null;
+            let minDistance = Infinity;
+
+            // Buscar enemigo más cercano
+            enemies.forEach(enemy => {
+                let dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    closestEnemy = enemy;
+                }
+            });
+
+            if (closestEnemy) {
+                let angle = Math.atan2(closestEnemy.y - this.y, closestEnemy.x - this.x);
+                projectiles.push(new Projectile(this.x, this.y, angle));
+            }
+        },
+
+        gainExp(amount) {
+            this.exp += amount;
+            if (this.exp >= this.expToNextLevel) {
+                this.levelUp();
+            }
+            expBarElement.style.width = `${(this.exp / this.expToNextLevel) * 100}%`;
+        },
+
+        levelUp() {
+            this.exp -= this.expToNextLevel;
+            this.level++;
+            this.expToNextLevel = Math.floor(this.expToNextLevel * 1.5);
+            levelElement.innerText = this.level;
+            
+            // Mejora: Dispara más rápido al subir de nivel (mínimo cada 10 frames)
+            if (this.fireRate > 10) this.fireRate -= 5;
+            
+            // Curarse un poco al subir de nivel
+            this.hp = Math.min(this.maxHp, this.hp + 20);
+            hpElement.innerText = this.hp;
         }
     };
 
-    // Objeto: Los obstáculos (Palillos de madera)
-    const obstacles = [];
-    const obstacleWidth = 40;
-    const gap = 140; // Espacio por donde pasa la aceituna
+    class Projectile {
+        constructor(x, y, angle) {
+            this.x = x;
+            this.y = y;
+            this.speed = 8;
+            this.radius = 5;
+            this.dx = Math.cos(angle) * this.speed;
+            this.dy = Math.sin(angle) * this.speed;
+            this.life = 100; // Desaparece tras X frames si no choca
+        }
 
-    function drawObstacles() {
-        for (let i = 0; i < obstacles.length; i++) {
-            let obs = obstacles[i];
-            
-            ctx.fillStyle = '#8B4513'; // Color madera
-            
-            // Palo superior
-            ctx.fillRect(obs.x, 0, obstacleWidth, obs.top);
-            // Palo inferior
-            ctx.fillRect(obs.x, canvas.height - obs.bottom, obstacleWidth, obs.bottom);
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#EEDD82'; // Color hueso
+            ctx.fill();
+        }
 
-            // Mover los obstáculos hacia la izquierda
-            obs.x -= 2.5;
+        update() {
+            this.x += this.dx;
+            this.y += this.dy;
+            this.life--;
+        }
+    }
 
-            // Detección de colisiones
-            let hitTop = aceituna.x + aceituna.radius > obs.x && 
-                         aceituna.x - aceituna.radius < obs.x + obstacleWidth && 
-                         aceituna.y - aceituna.radius < obs.top;
-                         
-            let hitBottom = aceituna.x + aceituna.radius > obs.x && 
-                            aceituna.x - aceituna.radius < obs.x + obstacleWidth && 
-                            aceituna.y + aceituna.radius > canvas.height - obs.bottom;
+    class Enemy {
+        constructor() {
+            // Aparecen en los bordes
+            let side = Math.floor(Math.random() * 4);
+            if (side === 0) { this.x = Math.random() * canvas.width; this.y = -30; } // Arriba
+            else if (side === 1) { this.x = canvas.width + 30; this.y = Math.random() * canvas.height; } // Derecha
+            else if (side === 2) { this.x = Math.random() * canvas.width; this.y = canvas.height + 30; } // Abajo
+            else { this.x = -30; this.y = Math.random() * canvas.height; } // Izquierda
 
-            if (hitTop || hitBottom) {
-                isGameOver = true;
+            this.radius = 12;
+            this.speed = Math.random() * 0.5 + 0.5; // Velocidad entre 0.5 y 1.0
+            this.hp = 1;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#8B4513'; // Color palillo/enemigo
+            ctx.fill();
+            ctx.strokeStyle = '#5c2e0b';
+            ctx.stroke();
+        }
+
+        update() {
+            // Perseguir al jugador
+            let angle = Math.atan2(player.y - this.y, player.x - this.x);
+            this.x += Math.cos(angle) * this.speed;
+            this.y += Math.sin(angle) * this.speed;
+        }
+    }
+
+    class Gem {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 4;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700'; // Gota de aceite
+            ctx.fill();
+        }
+    }
+
+    // Listas de entidades
+    let projectiles = [];
+    let enemies = [];
+    let gems = [];
+
+    // Generador de enemigos (aumenta la dificultad con el tiempo)
+    function spawnEnemies() {
+        let spawnRate = Math.max(10, 60 - Math.floor(frames / 300)); // Aparecen más rápido con el tiempo
+        if (frames % spawnRate === 0) {
+            enemies.push(new Enemy());
+        }
+    }
+
+    // Comprobación de colisiones (Círculos)
+    function checkCollisions() {
+        // Proyectiles vs Enemigos
+        for (let i = projectiles.length - 1; i >= 0; i--) {
+            for (let j = enemies.length - 1; j >= 0; j--) {
+                let p = projectiles[i];
+                let e = enemies[j];
+                if (!p || !e) continue;
+
+                let dist = Math.hypot(p.x - e.x, p.y - e.y);
+                if (dist < p.radius + e.radius) {
+                    // El enemigo muere
+                    gems.push(new Gem(e.x, e.y)); // Suelta experiencia
+                    enemies.splice(j, 1);
+                    projectiles.splice(i, 1);
+                    break;
+                }
             }
+        }
 
-            // Aumentar puntuación cuando pasas un obstáculo
-            if (obs.x === Math.floor(aceituna.x)) {
-                score++;
-                scoreElement.innerText = score;
+        // Jugador vs Gemas (Recoger EXP)
+        for (let i = gems.length - 1; i >= 0; i--) {
+            let g = gems[i];
+            // Distancia de recogida (imán)
+            let dist = Math.hypot(player.x - g.x, player.y - g.y);
+            if (dist < player.radius + 30) { 
+                player.gainExp(1);
+                gems.splice(i, 1);
             }
         }
 
-        // Borrar obstáculos que ya salieron de la pantalla por la izquierda
-        if (obstacles.length > 0 && obstacles[0].x < -obstacleWidth) {
-            obstacles.shift();
-        }
-    }
-
-    // Generar nuevos obstáculos cada cierto tiempo
-    function spawnObstacle() {
-        if (frames % 100 === 0) {
-            let minHeight = 50;
-            let maxHeight = canvas.height - gap - minHeight;
-            let topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
-            let bottomHeight = canvas.height - topHeight - gap;
-
-            obstacles.push({
-                x: canvas.width,
-                top: topHeight,
-                bottom: bottomHeight
-            });
-        }
-    }
-
-    // Controles (Ratón, Táctil o Tecla Espacio)
-    function handleInput(e) {
-        // Evitar que el espacio haga scroll en la web
-        if (e.type === 'keydown' && e.code === 'Space') e.preventDefault(); 
-        
-        if (isGameOver) {
-            resetGame();
-        } else {
-            if (e.type !== 'keydown' || e.code === 'Space') {
-                aceituna.flap();
+        // Jugador vs Enemigos (Daño)
+        enemies.forEach(enemy => {
+            let dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+            if (dist < player.radius + enemy.radius) {
+                player.hp -= 0.5; // Daño constante si te tocan
+                hpElement.innerText = Math.floor(player.hp);
+                if (player.hp <= 0) isGameOver = true;
             }
-        }
+        });
     }
 
-    window.addEventListener('keydown', handleInput);
-    window.addEventListener('touchstart', handleInput, {passive: false});
-    window.addEventListener('mousedown', handleInput);
-
-    // Reiniciar el juego tras perder
-    function resetGame() {
-        aceituna.y = 150;
-        aceituna.velocity = 0;
-        obstacles.length = 0;
-        score = 0;
-        scoreElement.innerText = score;
-        frames = 0;
-        isGameOver = false;
-        gameLoop();
-    }
-
-    // Bucle principal de animación (Motor del juego)
+    // --- BUCLE PRINCIPAL ---
     function gameLoop() {
         if (isGameOver) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'white';
-            ctx.font = 'bold 30px Arial';
+            ctx.font = 'bold 40px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('¡CRASH!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillText('FIN DE LA PARTIDA', canvas.width / 2, canvas.height / 2);
             ctx.font = '20px Arial';
-            ctx.fillText('Clic o Espacio para reiniciar', canvas.width / 2, canvas.height / 2 + 20);
+            ctx.fillText(`Llegaste al Nivel ${player.level}`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText('Recarga la página para volver a intentar', canvas.width / 2, canvas.height / 2 + 80);
             return;
         }
 
-        // Limpiar el lienzo en cada frame
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Ejecutar funciones
-        aceituna.draw();
-        aceituna.update();
-        
-        spawnObstacle();
-        drawObstacles();
+
+        player.update();
+        player.draw();
+
+        spawnEnemies();
+
+        // Actualizar y dibujar entidades
+        gems.forEach(gem => gem.draw());
+
+        projectiles.forEach((p, index) => {
+            p.update();
+            p.draw();
+            // Eliminar proyectiles viejos o que salen de la pantalla
+            if (p.life <= 0 || p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                projectiles.splice(index, 1);
+            }
+        });
+
+        enemies.forEach(enemy => {
+            enemy.update();
+            enemy.draw();
+        });
+
+        checkCollisions();
 
         frames++;
-        requestAnimationFrame(gameLoop); // Llama al siguiente frame
+        requestAnimationFrame(gameLoop);
     }
 
-    // Arrancar el juego
+    // Iniciar
     gameLoop();
 </script>
 
