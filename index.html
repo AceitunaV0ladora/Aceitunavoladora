@@ -3,160 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceituna Survivors - 3D Edition</title>
+    <title>Aceituna Survivors - Fullscreen Edition</title>
     <style>
         body {
-            margin: 0; padding: 0; background-color: #0a0a0a;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding: 0; background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden; color: white; user-select: none;
         }
-        #game-container {
-            position: relative; border: 2px solid #333;
-            border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
+        
+        /* Contenedor del canvas */
         canvas {
-            background: radial-gradient(circle at center, #2e4a22 0%, #0d1a08 100%);
-            display: block; border-radius: 10px;
+            display: block;
+            width: 100vw;
+            height: 100vh;
         }
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; display: flex; flex-direction: column;
-            padding: 20px; box-sizing: border-box; z-index: 10;
-        }
-        .bar-container { width: 300px; height: 18px; background: rgba(0,0,0,0.6); border: 1px solid #555; border-radius: 10px; margin-bottom: 8px; overflow: hidden; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-        .bar-fill { height: 100%; transition: width 0.15s ease-out; }
-        #hp-bar { background: linear-gradient(to bottom, #ff4e4e, #a80000); width: 100%; }
-        #exp-bar { background: linear-gradient(to bottom, #ffdf40, #b38b00); width: 0%; }
-        .level-text { font-size: 24px; font-weight: 900; color: #ffd700; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-top: 5px; letter-spacing: 1px; }
 
+        /* --- UI PRINCIPAL --- */
+        #hud-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; display: flex; z-index: 10;
+        }
+
+        /* Barra Lateral Izquierda (Habilidades) */
+        #sidebar {
+            width: 280px; height: 100%;
+            background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 80%, transparent 100%);
+            border-right: 2px solid rgba(255, 215, 0, 0.3);
+            padding: 20px; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-title {
+            font-size: 18px; color: #aaa; letter-spacing: 2px;
+            margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px;
+        }
+        #skills-list { display: flex; flex-direction: column; gap: 15px; }
+        .skill-item {
+            display: flex; align-items: center; background: rgba(255,255,255,0.05);
+            padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .skill-icon { font-size: 24px; margin-right: 15px; filter: drop-shadow(0 0 5px rgba(255,215,0,0.5)); }
+        .skill-name { font-size: 14px; font-weight: bold; color: #fff; }
+        .skill-level { font-size: 12px; color: #ffd700; margin-top: 3px; font-weight: bold; }
+
+        /* Barras Superiores (Centro) */
+        #top-bars {
+            flex-grow: 1; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .bar-container { width: 400px; height: 22px; background: rgba(0,0,0,0.8); border: 2px solid #333; border-radius: 12px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .bar-fill { height: 100%; transition: width 0.1s ease-out; }
+        #hp-bar { background: linear-gradient(90deg, #8b0000, #ff4e4e); width: 100%; }
+        #exp-bar { background: linear-gradient(90deg, #b38b00, #ffdf40); width: 0%; }
+        .level-text { font-size: 28px; font-weight: 900; color: #ffd700; text-shadow: 0 4px 6px rgba(0,0,0,1); }
+
+        /* --- MENÚS (Subida de nivel y Game Over) --- */
         #upgrade-menu, #game-over-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
-            display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 100; pointer-events: auto;
+            background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; pointer-events: auto;
         }
-        #upgrade-menu h2 { font-size: 40px; color: #fff; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(255,215,0,0.5); }
+        #upgrade-menu h2 { font-size: 45px; color: #fff; margin-bottom: 40px; text-shadow: 0 0 20px #ffd700; }
         .upgrade-option {
-            background: linear-gradient(145deg, #2a2a2a, #1f1f1f); border: 1px solid #444; border-radius: 12px;
-            width: 80%; max-width: 450px; padding: 20px; margin: 10px; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            background: linear-gradient(145deg, #1f1f1f, #151515); border: 2px solid #555; border-radius: 12px;
+            width: 80%; max-width: 500px; padding: 20px; margin: 12px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
-        .upgrade-option:hover { transform: translateY(-3px) scale(1.02); border-color: #ffd700; box-shadow: 0 10px 25px rgba(255,215,0,0.2); }
-        .upgrade-icon { font-size: 35px; margin-right: 25px; width: 50px; text-align: center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-        .upgrade-title { font-size: 22px; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
-        .upgrade-desc { font-size: 15px; color: #aaa; line-height: 1.4; }
+        .upgrade-option:hover { transform: scale(1.05); border-color: #ffd700; background: #2a2a2a; }
+        .upgrade-icon-large { font-size: 40px; margin-right: 25px; }
+        .upgrade-title { font-size: 24px; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
+        .upgrade-desc { font-size: 16px; color: #ccc; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <div id="ui-layer">
+<canvas id="gameCanvas"></canvas>
+
+<div id="hud-container">
+    <div id="sidebar">
+        <div class="sidebar-title">HABILIDADES ADQUIRIDAS</div>
+        <div id="skills-list">
+            </div>
+    </div>
+    
+    <div id="top-bars">
         <div class="bar-container"><div id="hp-bar" class="bar-fill"></div></div>
         <div class="bar-container"><div id="exp-bar" class="bar-fill"></div></div>
         <div class="level-text">NIVEL: <span id="level-val">1</span></div>
     </div>
+</div>
 
-    <div id="upgrade-menu">
-        <h2>NUEVO PODER ADQUIRIDO</h2>
-        <div id="upgrade-list"></div>
-    </div>
+<div id="upgrade-menu">
+    <h2>NUEVO PODER DISPONIBLE</h2>
+    <div id="upgrade-list"></div>
+</div>
 
-    <div id="game-over-screen">
-        <h1 style="font-size: 60px; color: #ff4e4e; text-shadow: 0 5px 15px rgba(255,0,0,0.5);">DERROTA</h1>
-        <p style="font-size: 22px; color: #ccc;">Has sobrevivido hasta el Nivel <span id="final-level"></span></p>
-        <p style="font-size: 18px; color: #888; margin-top: 20px;">Pulsa F5 para reiniciar</p>
-    </div>
-
-    <canvas id="gameCanvas" width="1000" height="700"></canvas>
+<div id="game-over-screen">
+    <h1 style="font-size: 80px; color: #ff4e4e; margin-bottom: 10px;">DERROTA</h1>
+    <p style="font-size: 24px; color: #ccc;">Nivel Máximo Alcanzado: <span id="final-level" style="color:#ffd700; font-weight:bold;"></span></p>
+    <p style="font-size: 18px; color: #888; margin-top: 30px; cursor:pointer; border: 1px solid #888; padding: 10px 20px; border-radius: 5px;" onclick="location.reload()">Hacer clic o F5 para reiniciar</p>
 </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
+    // --- PANTALLA COMPLETA DINÁMICA ---
+    let camera = { x: 0, y: 0 };
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Llamada inicial
+
     const ui = {
         hp: document.getElementById('hp-bar'), exp: document.getElementById('exp-bar'),
         level: document.getElementById('level-val'), menu: document.getElementById('upgrade-menu'),
         upgradeList: document.getElementById('upgrade-list'), gameOver: document.getElementById('game-over-screen'),
-        finalLevel: document.getElementById('final-level')
+        finalLevel: document.getElementById('final-level'), skillsList: document.getElementById('skills-list')
     };
 
     let frames = 0; let isGameOver = false; let isPaused = false;
     const keys = { w: false, a: false, s: false, d: false };
-
     window.addEventListener('keydown', e => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = true; });
     window.addEventListener('keyup', e => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; });
 
-    // --- BASE DE DATOS DE MEJORAS ---
     const UPGRADES_DB = [
-        { id: 'multishot', title: 'Ráfaga de Huesos', desc: 'Dispara +1 proyectil en abanico.', icon: '🌊', max: 5 },
-        { id: 'damage', title: 'Huesos Densos', desc: '+1 Daño por proyectil.', icon: '💥', max: 10 },
-        { id: 'fireRate', title: 'Cadencia Letal', desc: 'Disparas un 15% más rápido.', icon: '⏱️', max: 6 },
-        { id: 'speed', title: 'Aceite Extra Virgen', desc: '+10% Velocidad de movimiento.', icon: '🪽', max: 5 },
-        { id: 'pierce', title: 'Fuerza Perforante', desc: 'Tus huesos atraviesan a 1 enemigo más.', icon: '🏹', max: 4 },
-        { id: 'regen', title: 'Curación Natural', desc: 'Regeneras vida lentamente.', icon: '💖', max: 5 }
+        { id: 'multishot', title: 'Ráfaga Expansiva', desc: 'Dispara proyectiles adicionales.', icon: '🌊', max: 5 },
+        { id: 'damage', title: 'Huesos de Titanio', desc: '+ Daño base por impacto.', icon: '💥', max: 10 },
+        { id: 'fireRate', title: 'Ametralladora', desc: 'Aumenta drásticamente la cadencia.', icon: '⏱️', max: 6 },
+        { id: 'speed', title: 'Aerodinámica', desc: 'Te mueves mucho más rápido.', icon: '🪽', max: 5 },
+        { id: 'pierce', title: 'Perforación', desc: 'Tus ataques atraviesan enemigos.', icon: '🏹', max: 4 },
+        { id: 'regen', title: 'Relleno Mágico', desc: 'Regeneras vida con el tiempo.', icon: '💖', max: 5 }
     ];
 
-    // --- JUGADOR ---
+    // --- SISTEMAS DE JUEGO ---
+    let projectiles = []; let enemies = []; let gems = []; let particles = [];
+
     const player = {
-        x: canvas.width / 2, y: canvas.height / 2,
-        radius: 22, speed: 3.5, hp: 100, maxHp: 100,
+        x: 0, y: 0, // Posición lógica en el mundo infinito
+        radius: 25, speed: 4.5, hp: 100, maxHp: 100,
         level: 1, exp: 0, expToNext: 10,
-        
-        // Stats de combate
         fireRate: 60, multishot: 1, damage: 1, pierce: 0, regenLevel: 0,
         
+        // Inventario de habilidades para la UI izquierda
+        acquiredSkills: {}, 
+
         draw() {
             ctx.save();
-            ctx.translate(this.x, this.y);
+            // El jugador siempre se dibuja en el centro de la pantalla
+            ctx.translate(canvas.width/2, canvas.height/2); 
             
-            // Sombra en el suelo
-            ctx.beginPath(); ctx.ellipse(0, 18, 15, 6, 0, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
+            ctx.beginPath(); ctx.ellipse(0, 20, 18, 8, 0, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
 
-            // Rotación por movimiento
-            if(keys.a) ctx.rotate(-0.1); if(keys.d) ctx.rotate(0.1);
+            if(keys.a) ctx.rotate(-0.15); if(keys.d) ctx.rotate(0.15);
 
-            // Esfera de la aceituna (Gradiente Radial para 3D)
-            let oliveGrad = ctx.createRadialGradient(-5, -5, 2, 0, 0, this.radius);
-            oliveGrad.addColorStop(0, '#b8e067'); // Brillo
-            oliveGrad.addColorStop(0.4, '#6B8E23'); // Color base
-            oliveGrad.addColorStop(1, '#2c400c'); // Sombra
-            
+            let oliveGrad = ctx.createRadialGradient(-6, -6, 2, 0, 0, this.radius);
+            oliveGrad.addColorStop(0, '#d1ff75'); oliveGrad.addColorStop(0.4, '#6B8E23'); oliveGrad.addColorStop(1, '#1a2607');
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
             ctx.fillStyle = oliveGrad; ctx.fill();
             
-            // Pimiento (Gradiente para profundidad)
-            let pepGrad = ctx.createRadialGradient(-2, -9, 1, 0, -8, 8);
-            pepGrad.addColorStop(0, '#ff7a7a');
-            pepGrad.addColorStop(0.5, '#e60000');
-            pepGrad.addColorStop(1, '#660000');
+            ctx.beginPath(); ctx.ellipse(0, -10, 12, 7, 0, 0, Math.PI*2);
+            ctx.fillStyle = '#cc0000'; ctx.fill();
 
-            ctx.beginPath(); ctx.ellipse(0, -8, 10, 6, 0, 0, Math.PI*2);
-            ctx.fillStyle = pepGrad; ctx.fill();
-
-            // Reflejo brillante final (Glossy)
-            ctx.beginPath(); ctx.ellipse(-8, -8, 4, 2, -Math.PI/4, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fill();
+            ctx.beginPath(); ctx.ellipse(-10, -10, 5, 2, -Math.PI/4, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
 
             ctx.restore();
         },
         
         update() {
             let dx = 0; let dy = 0;
-            if (keys.w && this.y - this.radius > 0) dy -= this.speed;
-            if (keys.s && this.y + this.radius < canvas.height) dy += this.speed;
-            if (keys.a && this.x - this.radius > 0) dx -= this.speed;
-            if (keys.d && this.x + this.radius < canvas.width) dx += this.speed;
+            if (keys.w) dy -= this.speed; if (keys.s) dy += this.speed;
+            if (keys.a) dx -= this.speed; if (keys.d) dx += this.speed;
             
             if(dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
             this.x += dx; this.y += dy;
 
+            // Actualizar cámara para seguir al jugador
+            camera.x = this.x - canvas.width / 2;
+            camera.y = this.y - canvas.height / 2;
+
             if (frames % this.fireRate === 0 && enemies.length > 0) this.shoot();
 
-            if(this.regenLevel > 0 && frames % 180 === 0 && this.hp < this.maxHp) {
-                this.hp = Math.min(this.maxHp, this.hp + this.regenLevel * 2);
-                updateUI();
+            if(this.regenLevel > 0 && frames % 120 === 0 && this.hp < this.maxHp) {
+                this.hp = Math.min(this.maxHp, this.hp + this.regenLevel * 2); updateUI();
             }
         },
 
@@ -164,12 +197,12 @@
             let closestEn = null; let minD = Infinity;
             enemies.forEach(e => {
                 let d = Math.hypot(this.x - e.x, this.y - e.y);
-                if (d < minD) { minD = d; closestEn = e; }
+                if (d < minD && d < 1000) { minD = d; closestEn = e; } // Rango máx
             });
 
             if (closestEn) {
                 let baseAngle = Math.atan2(closestEn.y - this.y, closestEn.x - this.x);
-                let spread = 0.25; 
+                let spread = 0.20; 
                 for(let i=0; i<this.multishot; i++){
                     let angle = baseAngle + (i - (this.multishot-1)/2) * spread;
                     projectiles.push(new Projectile(this.x, this.y, angle, this.pierce, this.damage));
@@ -184,30 +217,47 @@
         }
     };
 
-    // --- ENTIDADES ---
+    // --- EFECTOS VISUALES (Partículas) ---
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            this.size = Math.random() * 4 + 2;
+            let angle = Math.random() * Math.PI * 2;
+            let speed = Math.random() * 4 + 1;
+            this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
+            this.life = 1.0; // Se desvanece
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            this.life -= 0.03;
+        }
+        draw() {
+            ctx.globalAlpha = Math.max(0, this.life);
+            ctx.fillStyle = this.color;
+            ctx.beginPath(); ctx.arc(this.x - camera.x, this.y - camera.y, this.size, 0, Math.PI*2); ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+    }
+
+    function createExplosion(x, y, isElite) {
+        let color = isElite ? '#5c3a21' : '#b07f56'; // Astillas de madera
+        for(let i=0; i<10; i++) particles.push(new Particle(x, y, color));
+    }
+
     class Projectile {
         constructor(x, y, angle, pierce, damage) {
             this.x = x; this.y = y; this.angle = angle;
-            this.speed = 9; this.radius = 7;
+            this.speed = 12; this.radius = 8;
             this.dx = Math.cos(angle) * this.speed; this.dy = Math.sin(angle) * this.speed;
             this.pierce = pierce; this.damage = damage;
             this.enemiesHit = [];
         }
         draw() {
-            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
-            
-            // Sombra
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 5;
-            
-            // Gradiente hueso 3D
+            ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y); ctx.rotate(this.angle);
             let boneGrad = ctx.createLinearGradient(-this.radius, 0, this.radius, 0);
-            boneGrad.addColorStop(0, '#fff6d1');
-            boneGrad.addColorStop(0.5, '#e0cf8d');
-            boneGrad.addColorStop(1, '#968855');
-
-            ctx.beginPath(); ctx.ellipse(0, 0, this.radius+1, this.radius-2, 0, 0, Math.PI*2);
+            boneGrad.addColorStop(0, '#ffffff'); boneGrad.addColorStop(1, '#968855');
+            ctx.beginPath(); ctx.ellipse(0, 0, this.radius+2, this.radius-2, 0, 0, Math.PI*2);
             ctx.fillStyle = boneGrad; ctx.fill();
-            
             ctx.restore();
         }
         update() { this.x += this.dx; this.y += this.dy; }
@@ -215,81 +265,38 @@
 
     class Enemy {
         constructor() {
-            // Aparecen fuera de cámara
-            if (Math.random() < 0.5) {
-                this.x = Math.random() < 0.5 ? -50 : canvas.width + 50; this.y = Math.random() * canvas.height;
-            } else {
-                this.x = Math.random() * canvas.width; this.y = Math.random() < 0.5 ? -50 : canvas.height + 50;
-            }
+            let spawnDist = Math.max(canvas.width, canvas.height) / 2 + 100;
+            let angle = Math.random() * Math.PI * 2;
+            this.x = player.x + Math.cos(angle) * spawnDist;
+            this.y = player.y + Math.sin(angle) * spawnDist;
             
-            // ESCALADO DE DIFICULTAD REAL
-            // Tipos de enemigos según nivel
-            let type = Math.random();
-            this.isElite = false;
-            
-            if(player.level > 3 && type > 0.8) {
-                // Enemigo de Élite (Palillo grueso/oscuro)
-                this.isElite = true;
-                this.radius = 16;
-                this.hp = 3 + Math.floor(player.level * 0.5); // Escala vida con nivel
-                this.speed = 0.6 + (player.level * 0.02);
-            } else {
-                // Enemigo normal
-                this.radius = 12;
-                this.hp = 1 + Math.floor(player.level * 0.2); // Sube 1 HP cada 5 niveles
-                this.speed = 1.0 + (player.level * 0.05); // Más rápidos progresivamente
-            }
-
+            this.isElite = (player.level > 3 && Math.random() > 0.85);
+            this.radius = this.isElite ? 18 : 14;
+            this.hp = this.isElite ? 4 + Math.floor(player.level*0.6) : 1 + Math.floor(player.level*0.2);
             this.maxHp = this.hp;
-            this.hitFlash = 0; // Para efecto visual al recibir daño
+            this.speed = this.isElite ? 1.0 + (player.level*0.02) : 1.5 + (player.level*0.04);
+            this.hitFlash = 0;
         }
-
         draw() {
-            ctx.save(); ctx.translate(this.x, this.y);
-            
-            let angle = Math.atan2(player.y - this.y, player.x - this.x);
-            ctx.rotate(angle);
+            ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y);
+            let angle = Math.atan2(player.y - this.y, player.x - this.x); ctx.rotate(angle);
 
-            // Sombra
-            ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 10;
+            if (this.hitFlash > 0) { ctx.fillStyle = 'white'; this.hitFlash--; } 
+            else { ctx.fillStyle = this.isElite ? '#3d2412' : '#b07f56'; }
 
-            // Palillo 3D (Gradiente lineal)
-            let woodGrad = ctx.createLinearGradient(-this.radius, -this.radius/2, this.radius, this.radius/2);
-            if (this.isElite) {
-                woodGrad.addColorStop(0, '#5c3a21'); woodGrad.addColorStop(0.5, '#3d2412'); woodGrad.addColorStop(1, '#1a0e05');
-            } else {
-                woodGrad.addColorStop(0, '#e6bc98'); woodGrad.addColorStop(0.5, '#b07f56'); woodGrad.addColorStop(1, '#5c3a21');
-            }
-
-            // Efecto de destello blanco si acaba de recibir daño
-            if (this.hitFlash > 0) {
-                ctx.fillStyle = 'white';
-                this.hitFlash--;
-            } else {
-                ctx.fillStyle = woodGrad;
-            }
-
-            // Forma del palillo con puntas
             ctx.beginPath();
             let l = this.radius * 1.5; let w = this.radius * 0.4;
-            ctx.moveTo(-l, -w); ctx.lineTo(l*0.6, -w); // Borde superior
-            ctx.lineTo(l, 0); // Punta afilada
-            ctx.lineTo(l*0.6, w); ctx.lineTo(-l, w); // Borde inferior
-            ctx.lineTo(-l*1.2, 0); // Punta trasera
-            ctx.closePath();
-            ctx.fill();
+            ctx.moveTo(-l, -w); ctx.lineTo(l*0.6, -w); ctx.lineTo(l, 0); 
+            ctx.lineTo(l*0.6, w); ctx.lineTo(-l, w); ctx.closePath(); ctx.fill();
 
-            // Barra de vida pequeña si está herido y es élite
-            if(this.hp < this.maxHp && this.isElite) {
-                ctx.shadowColor = 'transparent'; // Quitar sombra para UI
-                ctx.rotate(-angle); // Enderezar para la barra
-                ctx.fillStyle = 'black'; ctx.fillRect(-10, -20, 20, 4);
-                ctx.fillStyle = 'red'; ctx.fillRect(-10, -20, 20 * (this.hp/this.maxHp), 4);
+            // Barra vida
+            if(this.hp < this.maxHp) {
+                ctx.rotate(-angle);
+                ctx.fillStyle = 'black'; ctx.fillRect(-12, -25, 24, 4);
+                ctx.fillStyle = '#ff4e4e'; ctx.fillRect(-12, -25, 24 * (this.hp/this.maxHp), 4);
             }
-
             ctx.restore();
         }
-
         update() {
             let angle = Math.atan2(player.y - this.y, player.x - this.x);
             this.x += Math.cos(angle) * this.speed; this.y += Math.sin(angle) * this.speed;
@@ -297,94 +304,81 @@
     }
 
     class Gem {
-        constructor(x, y, value = 1) { 
-            this.x = x + (Math.random()*10-5); this.y = y + (Math.random()*10-5); 
-            this.radius = value > 1 ? 7 : 5; 
-            this.value = value;
+        constructor(x, y, value) { 
+            this.x = x + (Math.random()*20-10); this.y = y + (Math.random()*20-10); 
+            this.radius = value > 1 ? 8 : 5; this.value = value;
         }
         draw() {
-            ctx.save(); ctx.translate(this.x, this.y);
-            
-            // Brillo resplandeciente
-            ctx.shadowColor = '#ffdf40'; ctx.shadowBlur = 15;
-            
-            // Gota 3D
-            let gemGrad = ctx.createRadialGradient(-1, -2, 1, 0, 0, this.radius);
-            gemGrad.addColorStop(0, '#ffffff');
-            gemGrad.addColorStop(0.3, '#ffdf40');
-            gemGrad.addColorStop(1, '#d49a00');
-
-            ctx.fillStyle = gemGrad; 
+            ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y);
+            ctx.shadowColor = '#ffdf40'; ctx.shadowBlur = 10;
+            ctx.fillStyle = '#ffdf40'; 
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill();
-            
             ctx.restore();
         }
     }
 
-    // --- LOGICA CENTRAL ---
-    let projectiles = []; let enemies = []; let gems = [];
-
+    // --- FUNCIONES CORE ---
     function updateUI() {
         ui.hp.style.width = Math.max(0, (player.hp / player.maxHp * 100)) + '%';
         ui.exp.style.width = (player.exp / player.expToNext * 100) + '%';
         ui.level.innerText = player.level;
     }
 
-    function spawnEnemies() {
-        // DIFICULTAD PROGRESIVA: Spawnean más rápido según el nivel del jugador
-        let baseRate = 80;
-        let rateReduction = player.level * 4;
-        let spawnRate = Math.max(15, baseRate - rateReduction); // Cap mínimo en 15 frames
-        
-        if (frames % spawnRate === 0) {
-            // En niveles altos, spawnean en grupos
-            let count = player.level > 5 ? 2 : 1;
-            if (player.level > 10) count = 3;
-            
-            for(let i=0; i<count; i++) enemies.push(new Enemy());
+    function renderSidebarSkills() {
+        ui.skillsList.innerHTML = '';
+        for (let key in player.acquiredSkills) {
+            let data = UPGRADES_DB.find(u => u.id === key);
+            ui.skillsList.innerHTML += `
+                <div class="skill-item">
+                    <div class="skill-icon">${data.icon}</div>
+                    <div>
+                        <div class="skill-name">${data.title}</div>
+                        <div class="skill-level">Nivel ${player.acquiredSkills[key]} / ${data.max}</div>
+                    </div>
+                </div>
+            `;
         }
     }
 
-    // --- SISTEMA DE UPGRADES ---
     function triggerLevelUp() {
-        isPaused = true;
+        isPaused = true; keys.w = keys.a = keys.s = keys.d = false; // Reset input
         player.exp -= player.expToNext; player.level++;
-        player.expToNext = Math.floor(player.expToNext * 1.5); // Escala de exp más exigente
-        player.hp = Math.min(player.maxHp, player.hp + 20); // Cura al subir
+        player.expToNext = Math.floor(player.expToNext * 1.5);
+        player.hp = Math.min(player.maxHp, player.hp + 20);
         updateUI(); showUpgradeMenu();
     }
 
     function showUpgradeMenu() {
         ui.upgradeList.innerHTML = ''; ui.menu.style.display = 'flex';
         let available = UPGRADES_DB.filter(u => {
-            if(u.id === 'multishot' && player.multishot >= u.max) return false;
-            if(u.id === 'damage' && player.damage >= u.max) return false;
-            if(u.id === 'fireRate' && player.fireRate <= 15) return false; // Límite de velocidad
-            if(u.id === 'speed' && player.speed >= 6) return false;
-            if(u.id === 'pierce' && player.pierce >= u.max) return false;
-            if(u.id === 'regen' && player.regenLevel >= u.max) return false;
-            return true;
+            let currentLvl = player.acquiredSkills[u.id] || 0;
+            return currentLvl < u.max;
         });
 
         let selected = available.sort(() => 0.5 - Math.random()).slice(0, 3);
-
-        // Si ya está todo al máximo, cura automática
         if(selected.length === 0) { applyUpgrade('heal'); return; }
 
         selected.forEach(upg => {
+            let currentLvl = player.acquiredSkills[upg.id] || 0;
             const card = document.createElement('div'); card.className = 'upgrade-option';
-            card.innerHTML = `<div class="upgrade-icon">${upg.icon}</div><div><div class="upgrade-title">${upg.title}</div><div class="upgrade-desc">${upg.desc}</div></div>`;
+            card.innerHTML = `<div class="upgrade-icon-large">${upg.icon}</div><div><div class="upgrade-title">${upg.title} (Lvl ${currentLvl+1})</div><div class="upgrade-desc">${upg.desc}</div></div>`;
             card.onclick = () => applyUpgrade(upg.id);
             ui.upgradeList.appendChild(card);
         });
     }
 
     function applyUpgrade(id) {
+        if(id !== 'heal') {
+            if(!player.acquiredSkills[id]) player.acquiredSkills[id] = 0;
+            player.acquiredSkills[id]++;
+            renderSidebarSkills(); // Actualizar panel izquierdo
+        }
+
         switch(id) {
             case 'multishot': player.multishot++; break;
             case 'damage': player.damage++; break;
-            case 'fireRate': player.fireRate = Math.floor(player.fireRate * 0.85); break;
-            case 'speed': player.speed *= 1.10; break;
+            case 'fireRate': player.fireRate = Math.max(10, Math.floor(player.fireRate * 0.8)); break;
+            case 'speed': player.speed *= 1.15; break;
             case 'pierce': player.pierce++; break;
             case 'regen': player.regenLevel++; break;
             case 'heal': player.hp = player.maxHp; break;
@@ -393,9 +387,7 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // --- LOOP PRINCIPAL Y COLISIONES ---
     function checkCollisions() {
-        // Proyectiles vs Enemigos
         for (let i = projectiles.length - 1; i >= 0; i--) {
             let p = projectiles[i];
             for (let j = enemies.length - 1; j >= 0; j--) {
@@ -403,74 +395,80 @@
                 if(p.enemiesHit.includes(e)) continue;
 
                 if (Math.hypot(p.x - e.x, p.y - e.y) < p.radius + e.radius) {
-                    // Aplicar daño (Nueva mecánica)
-                    e.hp -= p.damage;
-                    e.hitFlash = 3; // Brillo de daño
+                    e.hp -= p.damage; e.hitFlash = 4;
+                    e.x += p.dx * 0.4; e.y += p.dy * 0.4; // Knockback
                     p.enemiesHit.push(e);
                     
-                    // Empuje leve (Knockback)
-                    e.x += p.dx * 0.5; e.y += p.dy * 0.5;
-
                     if (e.hp <= 0) {
-                        gems.push(new Gem(e.x, e.y, e.isElite ? 3 : 1)); // Élites sueltan más exp
+                        createExplosion(e.x, e.y, e.isElite);
+                        gems.push(new Gem(e.x, e.y, e.isElite ? 4 : 1));
                         enemies.splice(j, 1);
                     }
-
                     if(p.enemiesHit.length > p.pierce) { projectiles.splice(i, 1); break; }
                 }
             }
         }
 
-        // Imán de gemas
         for (let i = gems.length - 1; i >= 0; i--) {
-            let g = gems[i];
-            let d = Math.hypot(player.x - g.x, player.y - g.y);
-            if(d < 120){ 
-                let spd = 6 * (1 - d/120) + 2; 
+            let g = gems[i]; let d = Math.hypot(player.x - g.x, player.y - g.y);
+            if(d < 150){ 
                 let angle = Math.atan2(player.y - g.y, player.x - g.x);
-                g.x += Math.cos(angle) * spd; g.y += Math.sin(angle) * spd;
+                g.x += Math.cos(angle) * 8; g.y += Math.sin(angle) * 8;
             }
-            if (d < player.radius + g.radius) { 
-                player.gainExp(g.value); gems.splice(i, 1); 
-            }
+            if (d < player.radius + g.radius) { player.gainExp(g.value); gems.splice(i, 1); }
         }
 
-        // Daño al jugador (Aumenta sutilmente con el nivel)
         enemies.forEach(e => {
-            if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + (e.radius * 0.6)) { // Hitbox ajustada
-                let baseDamage = e.isElite ? 1.0 : 0.4;
-                player.hp -= baseDamage + (player.level * 0.02);
+            if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius - 5) {
+                player.hp -= (e.isElite ? 1.5 : 0.5) + (player.level * 0.05);
                 updateUI();
                 if (player.hp <= 0 && !isGameOver) { 
-                    isGameOver = true; 
-                    ui.finalLevel.innerText = player.level;
-                    ui.gameOver.style.display = 'flex'; 
+                    isGameOver = true; ui.finalLevel.innerText = player.level; ui.gameOver.style.display = 'flex'; 
                 }
             }
         });
     }
 
+    // Dibujar suelo con cuadrícula infinita
+    function drawBackground() {
+        ctx.fillStyle = '#081204'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
+        let gridSize = 100;
+        let offsetX = -(camera.x % gridSize); let offsetY = -(camera.y % gridSize);
+
+        ctx.beginPath();
+        for (let x = offsetX; x < canvas.width; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+        for (let y = offsetY; y < canvas.height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+        ctx.stroke();
+    }
+
     function gameLoop() {
         if (isGameOver || isPaused) return;
+        
+        drawBackground();
 
-        // Limpiar pantalla (Sin fondo redibujado para ahorrar recursos, usamos CSS background)
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Spawn
+        let spawnRate = Math.max(10, 60 - player.level * 2);
+        if (frames % spawnRate === 0) {
+            let count = player.level > 8 ? 3 : (player.level > 4 ? 2 : 1);
+            for(let i=0; i<count; i++) enemies.push(new Enemy());
+        }
 
-        spawnEnemies();
-
-        // Renderizado ordenado para simular profundidad (Z-Index manual)
+        // Renderizado
         gems.forEach(g => g.draw());
+        
+        particles.forEach((p, i) => { p.update(); p.draw(); if(p.life <= 0) particles.splice(i, 1); });
         
         projectiles.forEach((p, i) => { 
             p.update(); p.draw(); 
-            if(p.x<-50 || p.x>canvas.width+50 || p.y<-50 || p.y>canvas.height+50) projectiles.splice(i,1); 
+            // Eliminar si se alejan mucho del jugador
+            if(Math.hypot(p.x-player.x, p.y-player.y) > 1500) projectiles.splice(i,1); 
         });
         
-        // Dibujar enemigos ordenados por posición Y (los de abajo tapan a los de arriba)
-        enemies.sort((a,b) => a.y - b.y).forEach(e => { e.update(); e.draw(); });
+        enemies.forEach(e => { e.update(); e.draw(); });
         
-        player.update();
-        player.draw();
+        player.update(); player.draw();
 
         checkCollisions();
 
@@ -482,4 +480,4 @@
     gameLoop();
 </script>
 </body>
-</html> 
+</html>
