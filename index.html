@@ -3,125 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceituna Survivors - Fullscreen Edition</title>
+    <title>Aceituna Survivors - Boss Edition</title>
     <style>
         body {
             margin: 0; padding: 0; background-color: #050505;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden; color: white; user-select: none;
+            display: flex; height: 100vh; overflow: hidden; color: white; user-select: none;
         }
         
-        /* Contenedor del canvas */
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        /* --- UI PRINCIPAL --- */
-        #hud-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; display: flex; z-index: 10;
-        }
-
-        /* Barra Lateral Izquierda (Habilidades) */
+        /* --- PANEL LATERAL OPACO --- */
         #sidebar {
-            width: 280px; height: 100%;
-            background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 80%, transparent 100%);
-            border-right: 2px solid rgba(255, 215, 0, 0.3);
+            width: 320px; height: 100%;
+            background-color: #1e130c; /* Marrón muy oscuro/opaco */
+            border-right: 4px solid #8b5a2b; /* Borde madera */
+            box-shadow: 5px 0 15px rgba(0,0,0,0.8);
             padding: 20px; box-sizing: border-box;
-            display: flex; flex-direction: column;
+            display: flex; flex-direction: column; z-index: 20;
         }
         .sidebar-title {
-            font-size: 18px; color: #aaa; letter-spacing: 2px;
-            margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px;
+            font-size: 20px; font-weight: bold; color: #d4a373; text-align: center;
+            margin-bottom: 20px; border-bottom: 2px solid #5c3a21; padding-bottom: 10px;
         }
-        #skills-list { display: flex; flex-direction: column; gap: 15px; }
+        #skills-list { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
         .skill-item {
-            display: flex; align-items: center; background: rgba(255,255,255,0.05);
-            padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; background: #2c1e16;
+            padding: 12px; border-radius: 6px; border: 1px solid #4a3018;
         }
-        .skill-icon { font-size: 24px; margin-right: 15px; filter: drop-shadow(0 0 5px rgba(255,215,0,0.5)); }
-        .skill-name { font-size: 14px; font-weight: bold; color: #fff; }
-        .skill-level { font-size: 12px; color: #ffd700; margin-top: 3px; font-weight: bold; }
+        .skill-icon { font-size: 28px; margin-right: 15px; }
+        .skill-name { font-size: 15px; font-weight: bold; color: #fae1c5; }
+        .skill-level { font-size: 13px; color: #ffd700; margin-top: 4px; }
 
-        /* Barras Superiores (Centro) */
-        #top-bars {
-            flex-grow: 1; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
+        /* --- ÁREA DE JUEGO --- */
+        #game-wrapper {
+            flex-grow: 1; position: relative; background-color: #0a0a0a;
         }
-        .bar-container { width: 400px; height: 22px; background: rgba(0,0,0,0.8); border: 2px solid #333; border-radius: 12px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .bar-fill { height: 100%; transition: width 0.1s ease-out; }
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI Superior Central */
+        #top-ui {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 10;
+        }
+        .bar-container { width: 500px; height: 24px; background: #111; border: 2px solid #444; border-radius: 12px; margin-bottom: 8px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
+        .bar-fill { height: 100%; transition: width 0.2s ease-out; }
         #hp-bar { background: linear-gradient(90deg, #8b0000, #ff4e4e); width: 100%; }
         #exp-bar { background: linear-gradient(90deg, #b38b00, #ffdf40); width: 0%; }
-        .level-text { font-size: 28px; font-weight: 900; color: #ffd700; text-shadow: 0 4px 6px rgba(0,0,0,1); }
+        .level-text { font-size: 30px; font-weight: 900; color: #ffd700; text-shadow: 0 4px 6px #000; margin-top: 5px; }
+        
+        #wave-announcer {
+            position: absolute; top: 120px; left: 50%; transform: translateX(-50%);
+            font-size: 35px; font-weight: bold; color: #ffdf40; text-shadow: 0 0 20px #ff0000;
+            opacity: 0; transition: opacity 0.5s; pointer-events: none; z-index: 15; text-align: center;
+        }
 
-        /* --- MENÚS (Subida de nivel y Game Over) --- */
+        /* --- MENÚS --- */
         #upgrade-menu, #game-over-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            display: none; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 100; pointer-events: auto;
+            background-color: rgba(0,0,0,0.9); display: none; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 100;
         }
-        #upgrade-menu h2 { font-size: 45px; color: #fff; margin-bottom: 40px; text-shadow: 0 0 20px #ffd700; }
+        #upgrade-menu h2 { font-size: 45px; color: #ffd700; margin-bottom: 40px; }
         .upgrade-option {
-            background: linear-gradient(145deg, #1f1f1f, #151515); border: 2px solid #555; border-radius: 12px;
-            width: 80%; max-width: 500px; padding: 20px; margin: 12px; cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; text-align: left; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            background: #1a1a1a; border: 2px solid #555; border-radius: 10px;
+            width: 600px; padding: 20px; margin: 10px; cursor: pointer; display: flex; align-items: center;
         }
-        .upgrade-option:hover { transform: scale(1.05); border-color: #ffd700; background: #2a2a2a; }
-        .upgrade-icon-large { font-size: 40px; margin-right: 25px; }
-        .upgrade-title { font-size: 24px; font-weight: bold; color: #ffd700; margin-bottom: 5px; }
-        .upgrade-desc { font-size: 16px; color: #ccc; }
+        .upgrade-option:hover { border-color: #ffd700; background: #2a2a2a; transform: scale(1.02); }
+        .upgrade-icon-large { font-size: 45px; margin-right: 25px; }
     </style>
 </head>
 <body>
 
-<canvas id="gameCanvas"></canvas>
-
-<div id="hud-container">
-    <div id="sidebar">
-        <div class="sidebar-title">HABILIDADES ADQUIRIDAS</div>
-        <div id="skills-list">
-            </div>
+<div id="sidebar">
+    <div class="sidebar-title">HABILIDADES ADQUIRIDAS</div>
+    <div id="skills-list">
+        <div style="color: #888; text-align: center; font-style: italic; margin-top: 20px;">Sube de nivel para adquirir habilidades</div>
     </div>
-    
-    <div id="top-bars">
+</div>
+
+<div id="game-wrapper">
+    <div id="top-ui">
         <div class="bar-container"><div id="hp-bar" class="bar-fill"></div></div>
         <div class="bar-container"><div id="exp-bar" class="bar-fill"></div></div>
         <div class="level-text">NIVEL: <span id="level-val">1</span></div>
     </div>
-</div>
+    
+    <div id="wave-announcer">¡NUEVA OLEADA!</div>
 
-<div id="upgrade-menu">
-    <h2>NUEVO PODER DISPONIBLE</h2>
-    <div id="upgrade-list"></div>
-</div>
+    <div id="upgrade-menu">
+        <h2>NUEVO PODER DISPONIBLE</h2>
+        <div id="upgrade-list"></div>
+    </div>
 
-<div id="game-over-screen">
-    <h1 style="font-size: 80px; color: #ff4e4e; margin-bottom: 10px;">DERROTA</h1>
-    <p style="font-size: 24px; color: #ccc;">Nivel Máximo Alcanzado: <span id="final-level" style="color:#ffd700; font-weight:bold;"></span></p>
-    <p style="font-size: 18px; color: #888; margin-top: 30px; cursor:pointer; border: 1px solid #888; padding: 10px 20px; border-radius: 5px;" onclick="location.reload()">Hacer clic o F5 para reiniciar</p>
+    <div id="game-over-screen">
+        <h1 style="font-size: 80px; color: #ff4e4e;">DERROTA</h1>
+        <p style="font-size: 24px;">Nivel Alcanzado: <span id="final-level"></span></p>
+        <p style="font-size: 18px; color: #888; cursor:pointer;" onclick="location.reload()">[ F5 para reiniciar ]</p>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
 </div>
 
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
+    const wrapper = document.getElementById('game-wrapper');
     
-    // --- PANTALLA COMPLETA DINÁMICA ---
     let camera = { x: 0, y: 0 };
     function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = wrapper.clientWidth;
+        canvas.height = wrapper.clientHeight;
     }
     window.addEventListener('resize', resizeCanvas);
-    resizeCanvas(); // Llamada inicial
+    resizeCanvas();
 
     const ui = {
         hp: document.getElementById('hp-bar'), exp: document.getElementById('exp-bar'),
         level: document.getElementById('level-val'), menu: document.getElementById('upgrade-menu'),
         upgradeList: document.getElementById('upgrade-list'), gameOver: document.getElementById('game-over-screen'),
-        finalLevel: document.getElementById('final-level'), skillsList: document.getElementById('skills-list')
+        finalLevel: document.getElementById('final-level'), skillsList: document.getElementById('skills-list'),
+        announcer: document.getElementById('wave-announcer')
     };
 
     let frames = 0; let isGameOver = false; let isPaused = false;
@@ -130,47 +130,34 @@
     window.addEventListener('keyup', e => { if (e.key.toLowerCase() in keys) keys[e.key.toLowerCase()] = false; });
 
     const UPGRADES_DB = [
-        { id: 'multishot', title: 'Ráfaga Expansiva', desc: 'Dispara proyectiles adicionales.', icon: '🌊', max: 5 },
-        { id: 'damage', title: 'Huesos de Titanio', desc: '+ Daño base por impacto.', icon: '💥', max: 10 },
-        { id: 'fireRate', title: 'Ametralladora', desc: 'Aumenta drásticamente la cadencia.', icon: '⏱️', max: 6 },
-        { id: 'speed', title: 'Aerodinámica', desc: 'Te mueves mucho más rápido.', icon: '🪽', max: 5 },
-        { id: 'pierce', title: 'Perforación', desc: 'Tus ataques atraviesan enemigos.', icon: '🏹', max: 4 },
-        { id: 'regen', title: 'Relleno Mágico', desc: 'Regeneras vida con el tiempo.', icon: '💖', max: 5 }
+        { id: 'multishot', title: 'Ráfaga de Huesos', desc: 'Dispara proyectiles adicionales.', icon: '🦴', max: 5 },
+        { id: 'damage', title: 'Huesos de Hierro', desc: 'Aumenta el daño base.', icon: '💥', max: 10 },
+        { id: 'fireRate', title: 'Metralleta Oliva', desc: 'Disparas más rápido.', icon: '⏱️', max: 6 },
+        { id: 'speed', title: 'Aceite Rápido', desc: 'Aumenta tu velocidad.', icon: '🚀', max: 5 },
+        { id: 'pierce', title: 'Perforación', desc: 'Tus ataques atraviesan enemigos.', icon: '🏹', max: 4 }
     ];
 
-    // --- SISTEMAS DE JUEGO ---
-    let projectiles = []; let enemies = []; let gems = []; let particles = [];
+    // --- ENTIDADES PRINCIPALES ---
+    let projectiles = []; let enemies = []; let bosses = []; let gems = []; let particles = [];
 
     const player = {
-        x: 0, y: 0, // Posición lógica en el mundo infinito
-        radius: 25, speed: 4.5, hp: 100, maxHp: 100,
+        x: 0, y: 0, radius: 25, speed: 4.5, hp: 100, maxHp: 100,
         level: 1, exp: 0, expToNext: 10,
-        fireRate: 60, multishot: 1, damage: 1, pierce: 0, regenLevel: 0,
-        
-        // Inventario de habilidades para la UI izquierda
-        acquiredSkills: {}, 
+        fireRate: 60, multishot: 1, damage: 1, pierce: 0, acquiredSkills: {}, 
 
         draw() {
-            ctx.save();
-            // El jugador siempre se dibuja en el centro de la pantalla
-            ctx.translate(canvas.width/2, canvas.height/2); 
-            
-            ctx.beginPath(); ctx.ellipse(0, 20, 18, 8, 0, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fill();
-
-            if(keys.a) ctx.rotate(-0.15); if(keys.d) ctx.rotate(0.15);
-
-            let oliveGrad = ctx.createRadialGradient(-6, -6, 2, 0, 0, this.radius);
-            oliveGrad.addColorStop(0, '#d1ff75'); oliveGrad.addColorStop(0.4, '#6B8E23'); oliveGrad.addColorStop(1, '#1a2607');
+            ctx.save(); ctx.translate(canvas.width/2, canvas.height/2); 
+            // Sombra
+            ctx.beginPath(); ctx.ellipse(0, 20, 18, 8, 0, 0, Math.PI*2); ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fill();
+            if(keys.a) ctx.rotate(-0.1); if(keys.d) ctx.rotate(0.1);
+            // Aceituna
+            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fillStyle = '#6B8E23'; ctx.fill();
             ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-            ctx.fillStyle = oliveGrad; ctx.fill();
-            
-            ctx.beginPath(); ctx.ellipse(0, -10, 12, 7, 0, 0, Math.PI*2);
-            ctx.fillStyle = '#cc0000'; ctx.fill();
-
-            ctx.beginPath(); ctx.ellipse(-10, -10, 5, 2, -Math.PI/4, 0, Math.PI*2);
-            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fill();
-
+            let grad = ctx.createRadialGradient(-5, -5, 2, 0, 0, this.radius);
+            grad.addColorStop(0, 'rgba(255,255,255,0.4)'); grad.addColorStop(1, 'rgba(0,0,0,0.6)');
+            ctx.fillStyle = grad; ctx.fill();
+            // Pimiento
+            ctx.beginPath(); ctx.ellipse(0, -10, 10, 6, 0, 0, Math.PI*2); ctx.fillStyle = '#cc0000'; ctx.fill();
             ctx.restore();
         },
         
@@ -178,26 +165,23 @@
             let dx = 0; let dy = 0;
             if (keys.w) dy -= this.speed; if (keys.s) dy += this.speed;
             if (keys.a) dx -= this.speed; if (keys.d) dx += this.speed;
-            
             if(dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
             this.x += dx; this.y += dy;
 
-            // Actualizar cámara para seguir al jugador
-            camera.x = this.x - canvas.width / 2;
-            camera.y = this.y - canvas.height / 2;
+            camera.x = this.x - canvas.width / 2; camera.y = this.y - canvas.height / 2;
 
-            if (frames % this.fireRate === 0 && enemies.length > 0) this.shoot();
-
-            if(this.regenLevel > 0 && frames % 120 === 0 && this.hp < this.maxHp) {
-                this.hp = Math.min(this.maxHp, this.hp + this.regenLevel * 2); updateUI();
-            }
+            if (frames % this.fireRate === 0) this.shoot();
         },
 
         shoot() {
+            // Buscar objetivo (Jefe tiene prioridad si está cerca, si no enemigos)
+            let targets = bosses.concat(enemies);
+            if(targets.length === 0) return;
+
             let closestEn = null; let minD = Infinity;
-            enemies.forEach(e => {
-                let d = Math.hypot(this.x - e.x, this.y - e.y);
-                if (d < minD && d < 1000) { minD = d; closestEn = e; } // Rango máx
+            targets.forEach(t => {
+                let d = Math.hypot(this.x - t.x, this.y - t.y);
+                if (d < minD && d < 1200) { minD = d; closestEn = t; }
             });
 
             if (closestEn) {
@@ -217,48 +201,74 @@
         }
     };
 
-    // --- EFECTOS VISUALES (Partículas) ---
-    class Particle {
-        constructor(x, y, color) {
-            this.x = x; this.y = y; this.color = color;
-            this.size = Math.random() * 4 + 2;
+    // --- SISTEMA DE JEFES (Novedad) ---
+    class Boss {
+        constructor() {
             let angle = Math.random() * Math.PI * 2;
-            let speed = Math.random() * 4 + 1;
-            this.vx = Math.cos(angle) * speed; this.vy = Math.sin(angle) * speed;
-            this.life = 1.0; // Se desvanece
+            let dist = Math.max(canvas.width, canvas.height);
+            this.x = player.x + Math.cos(angle) * dist;
+            this.y = player.y + Math.sin(angle) * dist;
+            
+            this.radius = 80; // Gigante
+            this.hp = 100 + (player.level * 20); // Muchísima vida
+            this.maxHp = this.hp;
+            this.speed = 1.2; // Lento pero imparable
+            this.hitFlash = 0;
+            this.wobble = 0;
         }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            this.life -= 0.03;
-        }
+
         draw() {
-            ctx.globalAlpha = Math.max(0, this.life);
-            ctx.fillStyle = this.color;
-            ctx.beginPath(); ctx.arc(this.x - camera.x, this.y - camera.y, this.size, 0, Math.PI*2); ctx.fill();
-            ctx.globalAlpha = 1.0;
+            ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y);
+            this.wobble += 0.05;
+            
+            // Sombra masiva
+            ctx.beginPath(); ctx.ellipse(0, 60, 70, 25, 0, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fill();
+
+            if (this.hitFlash > 0) { ctx.fillStyle = 'white'; this.hitFlash--; } 
+            else { ctx.fillStyle = '#662211'; /* Color Albóndiga */ }
+
+            // Cuerpo Albóndiga
+            ctx.beginPath(); 
+            ctx.arc(0, Math.sin(this.wobble)*10, this.radius, 0, Math.PI*2); 
+            ctx.fill();
+
+            // Detalles (Pinchos gigantes)
+            ctx.fillStyle = '#d4a373';
+            for(let i=0; i<8; i++) {
+                ctx.save();
+                ctx.rotate((Math.PI*2/8) * i + this.wobble);
+                ctx.beginPath(); ctx.moveTo(0, -this.radius+10); ctx.lineTo(10, -this.radius-30); ctx.lineTo(-10, -this.radius-30); ctx.fill();
+                ctx.restore();
+            }
+
+            // Barra de vida de jefe gigante superior
+            ctx.restore();
+            // Dibujarla fija en la pantalla, no en el mundo
+            ctx.fillStyle = '#000'; ctx.fillRect(canvas.width/2 - 200, 80, 400, 20);
+            ctx.fillStyle = '#ff0000'; ctx.fillRect(canvas.width/2 - 198, 82, 396 * (this.hp/this.maxHp), 16);
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.strokeRect(canvas.width/2 - 200, 80, 400, 20);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'center';
+            ctx.fillText("GRAN ALBÓNDIGA MUTANTE", canvas.width/2, 75);
+        }
+
+        update() {
+            let angle = Math.atan2(player.y - this.y, player.x - this.x);
+            this.x += Math.cos(angle) * this.speed; this.y += Math.sin(angle) * this.speed;
         }
     }
 
-    function createExplosion(x, y, isElite) {
-        let color = isElite ? '#5c3a21' : '#b07f56'; // Astillas de madera
-        for(let i=0; i<10; i++) particles.push(new Particle(x, y, color));
-    }
-
+    // --- RESTO DE CLASES ---
     class Projectile {
         constructor(x, y, angle, pierce, damage) {
-            this.x = x; this.y = y; this.angle = angle;
-            this.speed = 12; this.radius = 8;
+            this.x = x; this.y = y; this.angle = angle; this.speed = 12; this.radius = 8;
             this.dx = Math.cos(angle) * this.speed; this.dy = Math.sin(angle) * this.speed;
-            this.pierce = pierce; this.damage = damage;
-            this.enemiesHit = [];
+            this.pierce = pierce; this.damage = damage; this.enemiesHit = [];
         }
         draw() {
             ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y); ctx.rotate(this.angle);
-            let boneGrad = ctx.createLinearGradient(-this.radius, 0, this.radius, 0);
-            boneGrad.addColorStop(0, '#ffffff'); boneGrad.addColorStop(1, '#968855');
             ctx.beginPath(); ctx.ellipse(0, 0, this.radius+2, this.radius-2, 0, 0, Math.PI*2);
-            ctx.fillStyle = boneGrad; ctx.fill();
-            ctx.restore();
+            ctx.fillStyle = '#fff6d1'; ctx.fill(); ctx.restore();
         }
         update() { this.x += this.dx; this.y += this.dy; }
     }
@@ -267,34 +277,15 @@
         constructor() {
             let spawnDist = Math.max(canvas.width, canvas.height) / 2 + 100;
             let angle = Math.random() * Math.PI * 2;
-            this.x = player.x + Math.cos(angle) * spawnDist;
-            this.y = player.y + Math.sin(angle) * spawnDist;
-            
-            this.isElite = (player.level > 3 && Math.random() > 0.85);
-            this.radius = this.isElite ? 18 : 14;
-            this.hp = this.isElite ? 4 + Math.floor(player.level*0.6) : 1 + Math.floor(player.level*0.2);
-            this.maxHp = this.hp;
-            this.speed = this.isElite ? 1.0 + (player.level*0.02) : 1.5 + (player.level*0.04);
-            this.hitFlash = 0;
+            this.x = player.x + Math.cos(angle) * spawnDist; this.y = player.y + Math.sin(angle) * spawnDist;
+            this.radius = 15; this.hp = 1 + Math.floor(player.level*0.3);
+            this.speed = 1.5 + (player.level*0.05); this.hitFlash = 0;
         }
         draw() {
             ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y);
             let angle = Math.atan2(player.y - this.y, player.x - this.x); ctx.rotate(angle);
-
-            if (this.hitFlash > 0) { ctx.fillStyle = 'white'; this.hitFlash--; } 
-            else { ctx.fillStyle = this.isElite ? '#3d2412' : '#b07f56'; }
-
-            ctx.beginPath();
-            let l = this.radius * 1.5; let w = this.radius * 0.4;
-            ctx.moveTo(-l, -w); ctx.lineTo(l*0.6, -w); ctx.lineTo(l, 0); 
-            ctx.lineTo(l*0.6, w); ctx.lineTo(-l, w); ctx.closePath(); ctx.fill();
-
-            // Barra vida
-            if(this.hp < this.maxHp) {
-                ctx.rotate(-angle);
-                ctx.fillStyle = 'black'; ctx.fillRect(-12, -25, 24, 4);
-                ctx.fillStyle = '#ff4e4e'; ctx.fillRect(-12, -25, 24 * (this.hp/this.maxHp), 4);
-            }
+            if (this.hitFlash > 0) { ctx.fillStyle = 'white'; this.hitFlash--; } else { ctx.fillStyle = '#a06a45'; }
+            ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(5, -6); ctx.lineTo(15, 0); ctx.lineTo(5, 6); ctx.lineTo(-20, 6); ctx.fill();
             ctx.restore();
         }
         update() {
@@ -303,65 +294,68 @@
         }
     }
 
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color; this.size = Math.random() * 4 + 2;
+            let a = Math.random() * Math.PI * 2; let s = Math.random() * 5 + 2;
+            this.vx = Math.cos(a) * s; this.vy = Math.sin(a) * s; this.life = 1.0;
+        }
+        update() { this.x += this.vx; this.y += this.vy; this.life -= 0.04; }
+        draw() { ctx.globalAlpha = Math.max(0, this.life); ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x - camera.x, this.y - camera.y, this.size, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1.0; }
+    }
+
     class Gem {
-        constructor(x, y, value) { 
-            this.x = x + (Math.random()*20-10); this.y = y + (Math.random()*20-10); 
-            this.radius = value > 1 ? 8 : 5; this.value = value;
-        }
-        draw() {
-            ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y);
-            ctx.shadowColor = '#ffdf40'; ctx.shadowBlur = 10;
-            ctx.fillStyle = '#ffdf40'; 
-            ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill();
-            ctx.restore();
-        }
+        constructor(x, y, value) { this.x = x + (Math.random()*20-10); this.y = y + (Math.random()*20-10); this.radius = value > 1 ? 10 : 6; this.value = value; }
+        draw() { ctx.save(); ctx.translate(this.x - camera.x, this.y - camera.y); ctx.fillStyle = '#ffdf40'; ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
     }
 
-    // --- FUNCIONES CORE ---
-    function updateUI() {
-        ui.hp.style.width = Math.max(0, (player.hp / player.maxHp * 100)) + '%';
-        ui.exp.style.width = (player.exp / player.expToNext * 100) + '%';
-        ui.level.innerText = player.level;
+    // --- LOGICA DE OLEADAS Y JUEGO ---
+    function createExplosion(x, y, isBoss = false) {
+        let color = isBoss ? '#8b0000' : '#d4a373';
+        let count = isBoss ? 50 : 10;
+        for(let i=0; i<count; i++) particles.push(new Particle(x, y, color));
     }
 
-    function renderSidebarSkills() {
-        ui.skillsList.innerHTML = '';
-        for (let key in player.acquiredSkills) {
-            let data = UPGRADES_DB.find(u => u.id === key);
-            ui.skillsList.innerHTML += `
-                <div class="skill-item">
-                    <div class="skill-icon">${data.icon}</div>
-                    <div>
-                        <div class="skill-name">${data.title}</div>
-                        <div class="skill-level">Nivel ${player.acquiredSkills[key]} / ${data.max}</div>
-                    </div>
-                </div>
-            `;
-        }
+    function announceWave(text) {
+        ui.announcer.innerText = text;
+        ui.announcer.style.opacity = 1;
+        setTimeout(() => ui.announcer.style.opacity = 0, 3000);
     }
 
     function triggerLevelUp() {
-        isPaused = true; keys.w = keys.a = keys.s = keys.d = false; // Reset input
+        isPaused = true;
+        
+        // MECÁNICA: Limpiar pantalla al subir de nivel (Da un respiro)
+        enemies.forEach(e => createExplosion(e.x, e.y));
+        enemies = []; 
+        
         player.exp -= player.expToNext; player.level++;
-        player.expToNext = Math.floor(player.expToNext * 1.5);
-        player.hp = Math.min(player.maxHp, player.hp + 20);
-        updateUI(); showUpgradeMenu();
+        player.expToNext = Math.floor(player.expToNext * 1.4);
+        player.hp = Math.min(player.maxHp, player.hp + 20); // Cura
+        updateUI();
+
+        // MECÁNICA: Aparición del Jefe cada 10 niveles
+        if (player.level % 10 === 0) {
+            bosses.push(new Boss());
+            announceWave("¡ATENCIÓN! JEFE ACERCÁNDOSE");
+        } else {
+            announceWave("OLEADA " + player.level);
+        }
+
+        showUpgradeMenu();
     }
 
     function showUpgradeMenu() {
         ui.upgradeList.innerHTML = ''; ui.menu.style.display = 'flex';
-        let available = UPGRADES_DB.filter(u => {
-            let currentLvl = player.acquiredSkills[u.id] || 0;
-            return currentLvl < u.max;
-        });
-
+        let available = UPGRADES_DB.filter(u => (player.acquiredSkills[u.id] || 0) < u.max);
         let selected = available.sort(() => 0.5 - Math.random()).slice(0, 3);
+        
         if(selected.length === 0) { applyUpgrade('heal'); return; }
 
         selected.forEach(upg => {
-            let currentLvl = player.acquiredSkills[upg.id] || 0;
+            let lvl = (player.acquiredSkills[upg.id] || 0) + 1;
             const card = document.createElement('div'); card.className = 'upgrade-option';
-            card.innerHTML = `<div class="upgrade-icon-large">${upg.icon}</div><div><div class="upgrade-title">${upg.title} (Lvl ${currentLvl+1})</div><div class="upgrade-desc">${upg.desc}</div></div>`;
+            card.innerHTML = `<div class="upgrade-icon-large">${upg.icon}</div><div><div style="font-size: 22px; color:#ffd700; font-weight:bold;">${upg.title} (Nivel ${lvl})</div><div style="color:#ccc;">${upg.desc}</div></div>`;
             card.onclick = () => applyUpgrade(upg.id);
             ui.upgradeList.appendChild(card);
         });
@@ -369,58 +363,72 @@
 
     function applyUpgrade(id) {
         if(id !== 'heal') {
-            if(!player.acquiredSkills[id]) player.acquiredSkills[id] = 0;
-            player.acquiredSkills[id]++;
-            renderSidebarSkills(); // Actualizar panel izquierdo
+            player.acquiredSkills[id] = (player.acquiredSkills[id] || 0) + 1;
+            renderSidebar();
         }
-
         switch(id) {
             case 'multishot': player.multishot++; break;
-            case 'damage': player.damage++; break;
+            case 'damage': player.damage += 1.5; break;
             case 'fireRate': player.fireRate = Math.max(10, Math.floor(player.fireRate * 0.8)); break;
             case 'speed': player.speed *= 1.15; break;
             case 'pierce': player.pierce++; break;
-            case 'regen': player.regenLevel++; break;
             case 'heal': player.hp = player.maxHp; break;
         }
-        ui.menu.style.display = 'none'; isPaused = false;
+        ui.menu.style.display = 'none'; isPaused = false; keys.w = keys.a = keys.s = keys.d = false;
         requestAnimationFrame(gameLoop);
     }
 
+    function renderSidebar() {
+        ui.skillsList.innerHTML = '';
+        for (let key in player.acquiredSkills) {
+            let data = UPGRADES_DB.find(u => u.id === key);
+            ui.skillsList.innerHTML += `<div class="skill-item"><div class="skill-icon">${data.icon}</div><div><div class="skill-name">${data.title}</div><div class="skill-level">Nivel ${player.acquiredSkills[key]} / ${data.max}</div></div></div>`;
+        }
+    }
+
     function checkCollisions() {
+        // Proyectiles vs Todos
         for (let i = projectiles.length - 1; i >= 0; i--) {
             let p = projectiles[i];
-            for (let j = enemies.length - 1; j >= 0; j--) {
-                let e = enemies[j];
-                if(p.enemiesHit.includes(e)) continue;
+            let targets = bosses.concat(enemies);
+            
+            for (let j = targets.length - 1; j >= 0; j--) {
+                let t = targets[j];
+                if(p.enemiesHit.includes(t)) continue;
 
-                if (Math.hypot(p.x - e.x, p.y - e.y) < p.radius + e.radius) {
-                    e.hp -= p.damage; e.hitFlash = 4;
-                    e.x += p.dx * 0.4; e.y += p.dy * 0.4; // Knockback
-                    p.enemiesHit.push(e);
+                if (Math.hypot(p.x - t.x, p.y - t.y) < p.radius + t.radius) {
+                    t.hp -= p.damage; t.hitFlash = 3;
+                    p.enemiesHit.push(t);
                     
-                    if (e.hp <= 0) {
-                        createExplosion(e.x, e.y, e.isElite);
-                        gems.push(new Gem(e.x, e.y, e.isElite ? 4 : 1));
-                        enemies.splice(j, 1);
+                    if(t.radius < 50) { t.x += p.dx*0.3; t.y += p.dy*0.3; } // Knockback solo a normales
+                    
+                    if (t.hp <= 0) {
+                        createExplosion(t.x, t.y, t.radius > 50);
+                        if(t.radius > 50) { 
+                            // Mataste al jefe
+                            bosses = bosses.filter(b => b !== t);
+                            for(let g=0; g<15; g++) gems.push(new Gem(t.x, t.y, 5)); // Lluvia de exp
+                        } else {
+                            enemies = enemies.filter(e => e !== t);
+                            gems.push(new Gem(t.x, t.y, 1));
+                        }
                     }
                     if(p.enemiesHit.length > p.pierce) { projectiles.splice(i, 1); break; }
                 }
             }
         }
 
+        // Gemas
         for (let i = gems.length - 1; i >= 0; i--) {
             let g = gems[i]; let d = Math.hypot(player.x - g.x, player.y - g.y);
-            if(d < 150){ 
-                let angle = Math.atan2(player.y - g.y, player.x - g.x);
-                g.x += Math.cos(angle) * 8; g.y += Math.sin(angle) * 8;
-            }
+            if(d < 150){ let a = Math.atan2(player.y - g.y, player.x - g.x); g.x += Math.cos(a)*9; g.y += Math.sin(a)*9; }
             if (d < player.radius + g.radius) { player.gainExp(g.value); gems.splice(i, 1); }
         }
 
-        enemies.forEach(e => {
-            if (Math.hypot(player.x - e.x, player.y - e.y) < player.radius + e.radius - 5) {
-                player.hp -= (e.isElite ? 1.5 : 0.5) + (player.level * 0.05);
+        // Daño al jugador
+        bosses.concat(enemies).forEach(t => {
+            if (Math.hypot(player.x - t.x, player.y - t.y) < player.radius + t.radius - 10) {
+                player.hp -= t.radius > 50 ? 2.0 : 0.5; // Jefe hace mucho más daño
                 updateUI();
                 if (player.hp <= 0 && !isGameOver) { 
                     isGameOver = true; ui.finalLevel.innerText = player.level; ui.gameOver.style.display = 'flex'; 
@@ -429,55 +437,45 @@
         });
     }
 
-    // Dibujar suelo con cuadrícula infinita
     function drawBackground() {
-        ctx.fillStyle = '#081204'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'; ctx.lineWidth = 1;
-        let gridSize = 100;
-        let offsetX = -(camera.x % gridSize); let offsetY = -(camera.y % gridSize);
-
+        ctx.fillStyle = '#111'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 1;
+        let s = 100; let ox = -(camera.x % s); let oy = -(camera.y % s);
         ctx.beginPath();
-        for (let x = offsetX; x < canvas.width; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
-        for (let y = offsetY; y < canvas.height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+        for (let x = ox; x < canvas.width; x += s) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+        for (let y = oy; y < canvas.height; y += s) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
         ctx.stroke();
     }
 
     function gameLoop() {
         if (isGameOver || isPaused) return;
-        
         drawBackground();
 
-        // Spawn
-        let spawnRate = Math.max(10, 60 - player.level * 2);
-        if (frames % spawnRate === 0) {
-            let count = player.level > 8 ? 3 : (player.level > 4 ? 2 : 1);
-            for(let i=0; i<count; i++) enemies.push(new Enemy());
+        // Spawn de enemigos (Se detiene si hay un jefe vivo para dar la sensación de "Duelo")
+        if(bosses.length === 0) {
+            let spawnRate = Math.max(10, 60 - player.level * 2);
+            if (frames % spawnRate === 0) enemies.push(new Enemy());
         }
 
-        // Renderizado
         gems.forEach(g => g.draw());
-        
         particles.forEach((p, i) => { p.update(); p.draw(); if(p.life <= 0) particles.splice(i, 1); });
         
         projectiles.forEach((p, i) => { 
             p.update(); p.draw(); 
-            // Eliminar si se alejan mucho del jugador
             if(Math.hypot(p.x-player.x, p.y-player.y) > 1500) projectiles.splice(i,1); 
         });
         
         enemies.forEach(e => { e.update(); e.draw(); });
+        bosses.forEach(b => { b.update(); b.draw(); });
         
         player.update(); player.draw();
-
         checkCollisions();
 
         frames++;
         requestAnimationFrame(gameLoop);
     }
 
-    updateUI();
-    gameLoop();
+    updateUI(); announceWave("EMPIEZA LA PARTIDA"); gameLoop();
 </script>
 </body>
 </html>
