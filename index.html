@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aceitunavoladora 🫒✈️</title>
+    <style>
+        /* Estilos generales */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #87CEEB, #a8e063); /* Degradado de cielo a verde oliva */
+            color: #2c3e50;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Título principal */
+        h1 {
+            font-size: 4rem;
+            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+            color: #1b5e20;
+        }
+
+        /* Texto descriptivo */
+        p {
+            font-size: 1.5rem;
+            max-width: 600px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* Contenedor y animación de la aceituna */
+        .olive-container {
+            font-size: 8rem;
+            /* La animación dura 3 segundos, va y viene infinitamente */
+            animation: fly 3s ease-in-out infinite alternate; 
+            margin-bottom: 20px;
+            filter: drop-shadow(0px 15px 10px rgba(0,0,0,0.2));
+        }
+
+        /* Fotogramas clave de la animación */
+        @keyframes fly {
+            0% { 
+                transform: translateY(20px) rotate(-5deg); 
+            }
+            100% { 
+                transform: translateY(-40px) rotate(15deg); 
+            }
+        }
+
+        /* Botón de acción */
+        .btn {
+            background-color: #1b5e20;
+            color: #ffffff;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(27, 94, 32, 0.4);
+        }
+
+        .btn:hover {
+            background-color: #2e7d32;
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.6);
+        }
+
+        /* Decoración de nubes flotantes */
+        .cloud {
+            position: absolute;
+            font-size: 4rem;
+            opacity: 0.5;
+            z-index: -1;
+            animation: drift 20s linear infinite;
+        }
+
+        .cloud1 { top: 10%; left: -10%; animation-duration: 25s; }
+        .cloud2 { top: 40%; left: -10%; animation-duration: 18s; font-size: 6rem; }
+        .cloud3 { top: 70%; left: -10%; animation-duration: 30s; }
+
+        @keyframes drift {
+            from { left: -10%; }
+            to { left: 110%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cloud cloud1">☁️</div>
+    <div class="cloud cloud2">☁️</div>
+    <div class="cloud cloud3">☁️</div>
+
+    <div class="olive-container">🫒</div>
+
+    <h1>Aceituna Voladora</h1>
+    <p>La primera aceituna con diseño aerodinámico del mundo. No rueda fuera de tu pizza... ¡aterriza suavemente en ella!</p>
+
+    <a href="#" class="btn" onclick="alert('¡Fiuuuush! La aceituna ha despegado hacia tu paladar.')">¡Haz que vuele!</a>
+
+</body>
+</html>
