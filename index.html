@@ -3,110 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceitunavoladora 🫒✈️</title>
+    <title>La Aceituna Voladora</title>
     <style>
-        /* Estilos generales */
         body {
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #87CEEB, #a8e063); /* Degradado de cielo a verde oliva */
-            color: #2c3e50;
-            text-align: center;
-            min-height: 100vh;
+            padding: 0;
+            background-color: #87CEEB; /* Cielo azul */
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
             overflow: hidden;
         }
-
-        /* Título principal */
-        h1 {
-            font-size: 4rem;
-            text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.5);
-            margin-bottom: 10px;
-            color: #1b5e20;
+        #game-container {
+            position: relative;
         }
-
-        /* Texto descriptivo */
-        p {
-            font-size: 1.5rem;
-            max-width: 600px;
-            margin-bottom: 40px;
-            line-height: 1.6;
+        canvas {
+            background-color: #f0f8ff;
+            border: 4px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
-
-        /* Contenedor y animación de la aceituna */
-        .olive-container {
-            font-size: 8rem;
-            /* La animación dura 3 segundos, va y viene infinitamente */
-            animation: fly 3s ease-in-out infinite alternate; 
-            margin-bottom: 20px;
-            filter: drop-shadow(0px 15px 10px rgba(0,0,0,0.2));
-        }
-
-        /* Fotogramas clave de la animación */
-        @keyframes fly {
-            0% { 
-                transform: translateY(20px) rotate(-5deg); 
-            }
-            100% { 
-                transform: translateY(-40px) rotate(15deg); 
-            }
-        }
-
-        /* Botón de acción */
-        .btn {
-            background-color: #1b5e20;
-            color: #ffffff;
-            padding: 15px 40px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 4px 15px rgba(27, 94, 32, 0.4);
-        }
-
-        .btn:hover {
-            background-color: #2e7d32;
-            transform: scale(1.05) translateY(-3px);
-            box-shadow: 0 6px 20px rgba(27, 94, 32, 0.6);
-        }
-
-        /* Decoración de nubes flotantes */
-        .cloud {
+        #ui {
             position: absolute;
-            font-size: 4rem;
-            opacity: 0.5;
-            z-index: -1;
-            animation: drift 20s linear infinite;
-        }
-
-        .cloud1 { top: 10%; left: -10%; animation-duration: 25s; }
-        .cloud2 { top: 40%; left: -10%; animation-duration: 18s; font-size: 6rem; }
-        .cloud3 { top: 70%; left: -10%; animation-duration: 30s; }
-
-        @keyframes drift {
-            from { left: -10%; }
-            to { left: 110%; }
+            top: 20px;
+            left: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
 
-    <div class="cloud cloud1">☁️</div>
-    <div class="cloud cloud2">☁️</div>
-    <div class="cloud cloud3">☁️</div>
+<div id="game-container">
+    <div id="ui">Puntuación: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+</div>
 
-    <div class="olive-container">🫒</div>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
 
-    <h1>Aceituna Voladora</h1>
-    <p>La primera aceituna con diseño aerodinámico del mundo. No rueda fuera de tu pizza... ¡aterriza suavemente en ella!</p>
+    // Variables globales del sistema
+    let frames = 0;
+    let score = 0;
+    let isGameOver = false;
 
-    <a href="#" class="btn" onclick="alert('¡Fiuuuush! La aceituna ha despegado hacia tu paladar.')">¡Haz que vuele!</a>
+    // Objeto: La Aceituna
+    const aceituna = {
+        x: 80,
+        y: 150,
+        radius: 15,
+        velocity: 0,
+        gravity: 0.3, // Fuerza con la que cae
+        jump: -6,     // Fuerza con la que salta
+        
+        draw() {
+            // Dibujar el cuerpo verde de la aceituna
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#6B8E23'; // Verde oliva
+            ctx.fill();
+            ctx.strokeStyle = '#4A6318';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+            
+            // Dibujar el relleno de pimiento rojo
+            ctx.beginPath();
+            ctx.arc(this.x + 6, this.y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#FF3333';
+            ctx.fill();
+            ctx.closePath();
+        },
+        
+        update() {
+            // Aplicar gravedad
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+
+            // Colisión con el suelo
+            if (this.y + this.radius >= canvas.height) {
+                this.y = canvas.height - this.radius;
+                isGameOver = true;
+            }
+            // Colisión con el techo
+            if (this.y - this.radius <= 0) {
+                this.y = this.radius;
+                this.velocity = 0;
+            }
+        },
+        
+        flap() {
+            this.velocity = this.jump;
+        }
+    };
+
+    // Objeto: Los obstáculos (Palillos de madera)
+    const obstacles = [];
+    const obstacleWidth = 40;
+    const gap = 140; // Espacio por donde pasa la aceituna
+
+    function drawObstacles() {
+        for (let i = 0; i < obstacles.length; i++) {
+            let obs = obstacles[i];
+            
+            ctx.fillStyle = '#8B4513'; // Color madera
+            
+            // Palo superior
+            ctx.fillRect(obs.x, 0, obstacleWidth, obs.top);
+            // Palo inferior
+            ctx.fillRect(obs.x, canvas.height - obs.bottom, obstacleWidth, obs.bottom);
+
+            // Mover los obstáculos hacia la izquierda
+            obs.x -= 2.5;
+
+            // Detección de colisiones
+            let hitTop = aceituna.x + aceituna.radius > obs.x && 
+                         aceituna.x - aceituna.radius < obs.x + obstacleWidth && 
+                         aceituna.y - aceituna.radius < obs.top;
+                         
+            let hitBottom = aceituna.x + aceituna.radius > obs.x && 
+                            aceituna.x - aceituna.radius < obs.x + obstacleWidth && 
+                            aceituna.y + aceituna.radius > canvas.height - obs.bottom;
+
+            if (hitTop || hitBottom) {
+                isGameOver = true;
+            }
+
+            // Aumentar puntuación cuando pasas un obstáculo
+            if (obs.x === Math.floor(aceituna.x)) {
+                score++;
+                scoreElement.innerText = score;
+            }
+        }
+
+        // Borrar obstáculos que ya salieron de la pantalla por la izquierda
+        if (obstacles.length > 0 && obstacles[0].x < -obstacleWidth) {
+            obstacles.shift();
+        }
+    }
+
+    // Generar nuevos obstáculos cada cierto tiempo
+    function spawnObstacle() {
+        if (frames % 100 === 0) {
+            let minHeight = 50;
+            let maxHeight = canvas.height - gap - minHeight;
+            let topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+            let bottomHeight = canvas.height - topHeight - gap;
+
+            obstacles.push({
+                x: canvas.width,
+                top: topHeight,
+                bottom: bottomHeight
+            });
+        }
+    }
+
+    // Controles (Ratón, Táctil o Tecla Espacio)
+    function handleInput(e) {
+        // Evitar que el espacio haga scroll en la web
+        if (e.type === 'keydown' && e.code === 'Space') e.preventDefault(); 
+        
+        if (isGameOver) {
+            resetGame();
+        } else {
+            if (e.type !== 'keydown' || e.code === 'Space') {
+                aceituna.flap();
+            }
+        }
+    }
+
+    window.addEventListener('keydown', handleInput);
+    window.addEventListener('touchstart', handleInput, {passive: false});
+    window.addEventListener('mousedown', handleInput);
+
+    // Reiniciar el juego tras perder
+    function resetGame() {
+        aceituna.y = 150;
+        aceituna.velocity = 0;
+        obstacles.length = 0;
+        score = 0;
+        scoreElement.innerText = score;
+        frames = 0;
+        isGameOver = false;
+        gameLoop();
+    }
+
+    // Bucle principal de animación (Motor del juego)
+    function gameLoop() {
+        if (isGameOver) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 30px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡CRASH!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '20px Arial';
+            ctx.fillText('Clic o Espacio para reiniciar', canvas.width / 2, canvas.height / 2 + 20);
+            return;
+        }
+
+        // Limpiar el lienzo en cada frame
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Ejecutar funciones
+        aceituna.draw();
+        aceituna.update();
+        
+        spawnObstacle();
+        drawObstacles();
+
+        frames++;
+        requestAnimationFrame(gameLoop); // Llama al siguiente frame
+    }
+
+    // Arrancar el juego
+    gameLoop();
+</script>
 
 </body>
 </html>
