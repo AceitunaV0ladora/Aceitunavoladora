@@ -3,77 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Perfil Dinámico</title>
+    <title>Mi Página Personal</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --bg: #f8fafc;
-            --text: #1e293b;
+        /* --- ESTILOS CSS --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; padding: 2rem; border-radius: 1rem; shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .editor-box { background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border: 1px solid #e2e8f0; }
-        h2 { font-size: 1.2rem; margin-top: 0; color: var(--primary); }
-        input, textarea { width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
-        
-        /* Estilo del Perfil Actualizado */
-        .preview { text-align: center; border-top: 2px solid #f1f5f9; padding-top: 2rem; }
-        .display-name { font-size: 2rem; margin: 0; color: var(--text); }
-        .display-bio { color: #64748b; font-style: italic; }
-        .badge-container { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 1rem; }
-        .badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 99px; font-size: 0.8rem; }
+
+        body {
+            /* Fondo con degradado animado */
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px); /* Efecto Glassmorphism */
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            max-width: 450px;
+            width: 90%;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover {
+            transform: scale(1.02);
+        }
+
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            border: 3px solid white;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            text-decoration: none;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: white;
+            color: #e73c7e;
+            transform: translateY(-2px);
+        }
+
+        .social {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+
+        .social a:hover {
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="editor-box">
-        <h2>⚙️ Editor en Vivo</h2>
-        <label>Tu Nombre:</label>
-        <input type="text" id="inputName" placeholder="Escribe tu nombre..." oninput="updateProfile()">
+    <div class="card">
+        <div class="profile-pic">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar">
+        </div>
         
-        <label>Tu Bio:</label>
-        <textarea id="inputBio" rows="3" placeholder="Cuéntanos algo sobre ti..." oninput="updateProfile()"></textarea>
+        <h1>Hola, soy [Tu Nombre]</h1>
+        <p class="subtitle">Creando cosas increíbles en la web.</p>
         
-        <label>Habilidades (separadas por comas):</label>
-        <input type="text" id="inputSkills" placeholder="Ej: Creativo, Programador, Guitarrista" oninput="updateProfile()">
+        <div class="links">
+            <a href="#" class="btn">🚀 Ver mis Proyectos</a>
+            <a href="#" class="btn">📄 Descargar CV</a>
+            <a href="mailto:tu@email.com" class="btn">✉️ Contactar conmigo</a>
+        </div>
+
+        <div class="social">
+            <a href="#">GitHub</a>
+            <a href="#">LinkedIn</a>
+            <a href="#">Instagram</a>
+        </div>
     </div>
-
-    <div class="preview">
-        <h1 class="display-name" id="displayName">Tu Nombre</h1>
-        <p class="display-bio" id="displayBio">Aquí aparecerá tu descripción en tiempo real...</p>
-        <div class="badge-container" id="displaySkills">
-            </div>
-    </div>
-</div>
-
-<script>
-    function updateProfile() {
-        // Obtener valores de los inputs
-        const name = document.getElementById('inputName').value;
-        const bio = document.getElementById('inputBio').value;
-        const skills = document.getElementById('inputSkills').value;
-
-        // Actualizar textos
-        document.getElementById('displayName').innerText = name || "Tu Nombre";
-        document.getElementById('displayBio').innerText = bio || "Aquí aparecerá tu descripción en tiempo real...";
-
-        // Actualizar burbujas de habilidades
-        const skillsContainer = document.getElementById('displaySkills');
-        skillsContainer.innerHTML = ''; // Limpiar previo
-        
-        if (skills) {
-            skills.split(',').forEach(skill => {
-                if (skill.trim() !== "") {
-                    const span = document.createElement('span');
-                    span.className = 'badge';
-                    span.innerText = skill.trim();
-                    skillsContainer.appendChild(span);
-                }
-            });
-        }
-    }
-</script>
 
 </body>
 </html>
