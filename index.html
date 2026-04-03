@@ -107,10 +107,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             background: radial-gradient(circle at center, #1a1a14 0%, #050503 100%);
             width: 100%;
             height: 100%;
+            padding: 40px 0;
+            box-sizing: border-box;
         }
 
         .top-controls {
@@ -121,7 +123,6 @@
             display: flex;
             justify-content: space-between;
             z-index: 200;
-            pointer-events: none;
         }
 
         .btn-ui {
@@ -136,7 +137,6 @@
             letter-spacing: 2px;
             backdrop-filter: blur(10px);
             transition: all 0.3s;
-            pointer-events: auto;
             text-transform: uppercase;
         }
 
@@ -160,23 +160,20 @@
             z-index: 300;
         }
 
+        /* Marcador Superior */
         #stats-panel {
-            position: absolute;
-            top: 100px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: none;
+            text-align: center;
             z-index: 50;
+            pointer-events: none;
         }
 
         #total-olives {
             font-family: 'Playfair Display', serif;
-            font-size: clamp(60px, 10vw, 110px);
+            font-size: clamp(60px, 12vw, 120px);
             font-weight: 900;
             line-height: 1;
             color: #fff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.1);
+            text-shadow: 0 0 40px rgba(107, 142, 35, 0.3);
             margin: 0;
         }
 
@@ -185,29 +182,30 @@
             color: var(--gold);
             text-transform: uppercase;
             letter-spacing: 5px;
-            margin-top: 10px;
+            margin-top: 15px;
             background: rgba(0,0,0,0.4);
-            padding: 5px 20px;
-            border-radius: 20px;
+            padding: 8px 24px;
+            border-radius: 30px;
             border: 1px solid rgba(212, 175, 55, 0.1);
+            display: inline-block;
         }
 
+        /* Escenario de la Aceituna */
         #olive-stage {
             position: relative;
-            width: 500px;
-            height: 500px;
+            width: 450px;
+            height: 450px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 50px;
         }
 
         #floor-shadow {
             position: absolute;
-            bottom: 60px;
-            width: 200px;
-            height: 40px;
-            background: radial-gradient(ellipse at center, rgba(0,0,0,0.6) 0%, transparent 70%);
+            bottom: 40px;
+            width: 220px;
+            height: 45px;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, transparent 70%);
             border-radius: 50%;
             transition: transform 0.1s ease;
         }
@@ -220,19 +218,19 @@
             position: relative;
             z-index: 10;
             transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.7);
             background: radial-gradient(circle at 35% 35%, 
                 #e1f5b6 0%, 
                 #a7c957 25%, 
                 #6b8e23 55%, 
                 #384d12 85%, 
                 #1a2405 100%);
-            animation: idleFloat 6s ease-in-out infinite;
+            animation: idleFloat 5s ease-in-out infinite;
         }
 
         @keyframes idleFloat {
             0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(1deg); }
+            50% { transform: translateY(-20px) rotate(1.5deg); }
         }
 
         #big-olive::after {
@@ -246,8 +244,8 @@
             box-shadow: inset 0 -3px 8px rgba(0,0,0,0.5), 0 2px 4px rgba(255,255,255,0.1);
         }
 
-        #big-olive:active { transform: scale(0.92) translateY(5px); }
-        #big-olive:active + #floor-shadow { transform: scale(0.85); opacity: 0.8; }
+        #big-olive:active { transform: scale(0.92) translateY(10px); }
+        #big-olive:active + #floor-shadow { transform: scale(0.8); opacity: 0.8; }
 
         .shockwave {
             position: absolute;
@@ -255,12 +253,12 @@
             border: 1px solid var(--gold);
             border-radius: 50%;
             pointer-events: none;
-            animation: wave 0.8s ease-out forwards;
+            animation: wave 0.7s ease-out forwards;
         }
 
         @keyframes wave {
             0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(2.2); opacity: 0; }
+            100% { transform: scale(2.5); opacity: 0; }
         }
 
         .floating-olive {
@@ -273,7 +271,7 @@
 
         @keyframes floatOlive {
             0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), -200px) scale(1.5); opacity: 0; }
+            100% { transform: translate(var(--tx), -220px) scale(1.6); opacity: 0; }
         }
 
         #upgrades-container::-webkit-scrollbar { width: 3px; }
@@ -281,9 +279,10 @@
         #upgrades-container::-webkit-scrollbar-thumb { background: var(--panel-border); }
 
         @media (max-width: 900px) {
-            #sidebar { width: 300px; }
+            #sidebar { width: 320px; }
             #total-olives { font-size: 70px; }
-            #big-olive { width: 250px; height: 250px; }
+            #big-olive { width: 260px; height: 260px; }
+            #olive-stage { width: 350px; height: 350px; }
         }
     </style>
 </head>
@@ -292,13 +291,14 @@
 <div id="sidebar">
     <div class="sidebar-header">
         <h1>Almazara Imperial</h1>
-        <p style="font-size: 9px; letter-spacing: 3px; color: var(--gold); margin-top: 10px; opacity: 0.6;">RESERVA DE FAMILIA</p>
+        <p style="font-size: 9px; letter-spacing: 3px; color: var(--gold); margin-top: 10px; opacity: 0.6;">COSECHA DE ORO</p>
     </div>
     <div id="upgrades-container"></div>
 </div>
 
 <div id="game-area">
-    <div id="save-indicator">Progreso guardado</div>
+    <div id="save-indicator">Progreso Sincronizado</div>
+    
     <div class="top-controls">
         <button class="btn-ui" onclick="toggleSidebar()" id="toggle-btn">GESTIÓN</button>
         <button class="btn-ui" onclick="toggleFullscreen()">FULLSCREEN</button>
@@ -313,6 +313,8 @@
         <div id="big-olive"></div>
         <div id="floor-shadow"></div>
     </div>
+
+    <div style="height: 60px;"></div> <!-- Espaciador inferior para equilibrio visual -->
 </div>
 
 <!-- Firebase SDK -->
@@ -365,7 +367,7 @@
             userId = user.uid;
             await loadProgress();
             if (!isInitialized) {
-                initGame();
+                initGameLoop();
                 isInitialized = true;
             }
         }
@@ -373,7 +375,6 @@
 
     async function saveProgress() {
         if (!userId) return;
-        
         try {
             const progressDoc = doc(db, 'artifacts', appId, 'users', userId, 'gameProgress', 'current');
             await setDoc(progressDoc, {
@@ -381,7 +382,6 @@
                 upgrades: upgrades.map(u => ({ id: u.id, count: u.count, cost: u.cost })),
                 lastSaved: Date.now()
             });
-            
             showSaveIndicator();
         } catch (e) {
             console.error("Error al guardar:", e);
@@ -390,15 +390,12 @@
 
     async function loadProgress() {
         if (!userId) return;
-        
         try {
             const progressDoc = doc(db, 'artifacts', appId, 'users', userId, 'gameProgress', 'current');
             const snap = await getDoc(progressDoc);
-            
             if (snap.exists()) {
                 const data = snap.data();
                 olives = data.olives || 0;
-                
                 if (data.upgrades) {
                     data.upgrades.forEach(savedUp => {
                         const localUp = upgrades.find(u => u.id === savedUp.id);
@@ -408,10 +405,10 @@
                         }
                     });
                 }
-                updateStats();
-                updateUI();
-                renderUpgrades();
             }
+            updateStats();
+            updateUI();
+            renderUpgrades();
         } catch (e) {
             console.error("Error al cargar:", e);
         }
@@ -423,19 +420,16 @@
     }
 
     // --- LOGICA DE JUEGO ---
-    function initGame() {
+    function initGameLoop() {
         renderUpgrades();
         updateUI();
-        
         setInterval(() => {
             if (olivesPerSec > 0) {
                 olives += olivesPerSec / 10;
                 updateUI();
             }
         }, 100);
-
-        // Guardado automático cada 10 segundos
-        setInterval(saveProgress, 10000);
+        setInterval(saveProgress, 15000);
     }
 
     window.toggleSidebar = () => {
@@ -484,7 +478,7 @@
         const wave = document.createElement('div');
         wave.className = 'shockwave';
         document.getElementById('olive-stage').appendChild(wave);
-        setTimeout(() => wave.remove(), 800);
+        setTimeout(() => wave.remove(), 700);
 
         const float = document.createElement('div');
         float.className = 'floating-olive';
@@ -492,7 +486,7 @@
         const gameAreaRect = document.getElementById('game-area').getBoundingClientRect();
         float.style.left = (e.clientX - gameAreaRect.left - 15) + 'px'; 
         float.style.top = (e.clientY - gameAreaRect.top - 15) + 'px';
-        float.style.setProperty('--tx', (Math.random() * 160 - 80) + 'px');
+        float.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
         document.getElementById('game-area').appendChild(float);
         setTimeout(() => float.remove(), 1000);
     }
@@ -506,19 +500,18 @@
             updateStats();
             updateUI();
             renderUpgrades();
-            saveProgress(); // Guardar inmediatamente al comprar
+            saveProgress();
         }
     }
 
     function updateStats() {
         olivesPerSec = upgrades.reduce((acc, u) => acc + (u.count * u.aps), 0);
-        clickPower = 1 + (olivesPerSec * 0.1); 
+        clickPower = 1 + (olivesPerSec * 0.12); 
     }
 
     function updateUI() {
         oliveDisplay.innerText = format(olives);
         apsDisplay.innerText = `${format(olivesPerSec)} Aceitunas / segundo`;
-        
         upgrades.forEach(up => {
             const card = document.getElementById(`upg-${up.id}`);
             if (card) {
