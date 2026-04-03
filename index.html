@@ -3,525 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceituna Tycoon | Grand Reserve</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <title>Mi Perfil Dinámico</title>
     <style>
         :root {
-            --bg: #0a0a08;
-            --sidebar-bg: #120e0a;
-            --olive: #6b8e23;
-            --gold: #d4af37;
-            --gold-light: #f1d592;
-            --panel-border: #2a1f18;
-            --text: #f4ece2;
-            --glass: rgba(255, 255, 255, 0.03);
+            --primary: #6366f1;
+            --bg: #f8fafc;
+            --text: #1e293b;
         }
-
-        body, html {
-            margin: 0; padding: 0;
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Montserrat', sans-serif;
-            height: 100vh; width: 100vw;
-            overflow: hidden;
-            display: flex;
-        }
-
-        /* --- SIDEBAR --- */
-        #sidebar {
-            width: 380px;
-            height: 100%;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--panel-border);
-            display: flex;
-            flex-direction: column;
-            z-index: 100;
-            box-shadow: 20px 0 60px rgba(0,0,0,0.9);
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            position: relative;
-        }
-
-        #sidebar.collapsed {
-            transform: translateX(-100%);
-            position: absolute;
-        }
-
-        .sidebar-header {
-            padding: 50px 25px 30px;
-            text-align: center;
-            border-bottom: 1px solid var(--panel-border);
-        }
-
-        .sidebar-header h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px;
-            margin: 0;
-            color: var(--gold);
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        #upgrades-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .upgrade-card {
-            background: var(--glass);
-            border: 1px solid var(--panel-border);
-            padding: 18px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-        }
-
-        .upgrade-card:hover:not(.locked) {
-            background: rgba(212, 175, 55, 0.08);
-            border-color: var(--gold);
-            transform: translateX(5px);
-        }
-
-        .upgrade-card.locked {
-            opacity: 0.2;
-            cursor: not-allowed;
-            filter: grayscale(1);
-        }
-
-        .upgrade-info b { display: block; font-size: 15px; color: var(--gold-light); margin-bottom: 4px; }
-        .upgrade-info span { font-size: 11px; color: #887b6e; line-height: 1.4; display: block; max-width: 180px; }
-        .upgrade-cost { font-size: 13px; font-weight: 700; color: #fff; margin-top: 10px; }
-        .upgrade-count { font-size: 32px; font-weight: 900; color: rgba(255,255,255,0.02); position: absolute; right: 15px; top: 50%; transform: translateY(-50%); }
-
-        /* --- ÁREA DE JUEGO --- */
-        #game-area {
-            flex-grow: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            background: radial-gradient(circle at center, #1a1a14 0%, #050503 100%);
-            width: 100%;
-            height: 100%;
-            padding: 40px 0;
-            box-sizing: border-box;
-        }
-
-        .top-controls {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            right: 25px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 200;
-        }
-
-        .btn-ui {
-            background: rgba(18, 14, 10, 0.6);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            color: var(--gold);
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 11px;
-            letter-spacing: 2px;
-            backdrop-filter: blur(10px);
-            transition: all 0.3s;
-            text-transform: uppercase;
-        }
-
-        .btn-ui:hover {
-            border-color: var(--gold);
-            background: var(--gold);
-            color: black;
-        }
-
-        #save-indicator {
-            position: fixed;
-            top: 25px;
-            right: 150px;
-            font-size: 10px;
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            z-index: 300;
-        }
-
-        /* Marcador Superior */
-        #stats-panel {
-            text-align: center;
-            z-index: 50;
-            pointer-events: none;
-        }
-
-        #total-olives {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(60px, 12vw, 120px);
-            font-weight: 900;
-            line-height: 1;
-            color: #fff;
-            text-shadow: 0 0 40px rgba(107, 142, 35, 0.3);
-            margin: 0;
-        }
-
-        #aps-display {
-            font-size: 14px;
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            margin-top: 15px;
-            background: rgba(0,0,0,0.4);
-            padding: 8px 24px;
-            border-radius: 30px;
-            border: 1px solid rgba(212, 175, 55, 0.1);
-            display: inline-block;
-        }
-
-        /* Escenario de la Aceituna */
-        #olive-stage {
-            position: relative;
-            width: 450px;
-            height: 450px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        #floor-shadow {
-            position: absolute;
-            bottom: 40px;
-            width: 220px;
-            height: 45px;
-            background: radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, transparent 70%);
-            border-radius: 50%;
-            transition: transform 0.1s ease;
-        }
-
-        #big-olive {
-            width: 320px;
-            height: 320px;
-            border-radius: 50%;
-            cursor: pointer;
-            position: relative;
-            z-index: 10;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.7);
-            background: radial-gradient(circle at 35% 35%, 
-                #e1f5b6 0%, 
-                #a7c957 25%, 
-                #6b8e23 55%, 
-                #384d12 85%, 
-                #1a2405 100%);
-            animation: idleFloat 5s ease-in-out infinite;
-        }
-
-        @keyframes idleFloat {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(1.5deg); }
-        }
-
-        #big-olive::after {
-            content: '';
-            position: absolute;
-            top: 18%; left: 50%;
-            transform: translateX(-50%);
-            width: 30%; height: 20%;
-            background: radial-gradient(circle at 40% 40%, #ff4444, #990000 80%);
-            border-radius: 50%;
-            box-shadow: inset 0 -3px 8px rgba(0,0,0,0.5), 0 2px 4px rgba(255,255,255,0.1);
-        }
-
-        #big-olive:active { transform: scale(0.92) translateY(10px); }
-        #big-olive:active + #floor-shadow { transform: scale(0.8); opacity: 0.8; }
-
-        .shockwave {
-            position: absolute;
-            width: 320px; height: 320px;
-            border: 1px solid var(--gold);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: wave 0.7s ease-out forwards;
-        }
-
-        @keyframes wave {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(2.5); opacity: 0; }
-        }
-
-        .floating-olive {
-            position: absolute;
-            pointer-events: none;
-            animation: floatOlive 1s ease-out forwards;
-            font-size: 32px;
-            z-index: 60;
-        }
-
-        @keyframes floatOlive {
-            0% { transform: translate(0, 0) scale(1); opacity: 1; }
-            100% { transform: translate(var(--tx), -220px) scale(1.6); opacity: 0; }
-        }
-
-        #upgrades-container::-webkit-scrollbar { width: 3px; }
-        #upgrades-container::-webkit-scrollbar-track { background: transparent; }
-        #upgrades-container::-webkit-scrollbar-thumb { background: var(--panel-border); }
-
-        @media (max-width: 900px) {
-            #sidebar { width: 320px; }
-            #total-olives { font-size: 70px; }
-            #big-olive { width: 260px; height: 260px; }
-            #olive-stage { width: 350px; height: 350px; }
-        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 2rem; border-radius: 1rem; shadow: 0 10px 15px -3px rgba(0,0,0,0.1); width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .editor-box { background: #f1f5f9; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; border: 1px solid #e2e8f0; }
+        h2 { font-size: 1.2rem; margin-top: 0; color: var(--primary); }
+        input, textarea { width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Estilo del Perfil Actualizado */
+        .preview { text-align: center; border-top: 2px solid #f1f5f9; padding-top: 2rem; }
+        .display-name { font-size: 2rem; margin: 0; color: var(--text); }
+        .display-bio { color: #64748b; font-style: italic; }
+        .badge-container { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 1rem; }
+        .badge { background: var(--primary); color: white; padding: 4px 12px; border-radius: 99px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <div class="sidebar-header">
-        <h1>Almazara Imperial</h1>
-        <p style="font-size: 9px; letter-spacing: 3px; color: var(--gold); margin-top: 10px; opacity: 0.6;">COSECHA DE ORO</p>
+<div class="card">
+    <div class="editor-box">
+        <h2>⚙️ Editor en Vivo</h2>
+        <label>Tu Nombre:</label>
+        <input type="text" id="inputName" placeholder="Escribe tu nombre..." oninput="updateProfile()">
+        
+        <label>Tu Bio:</label>
+        <textarea id="inputBio" rows="3" placeholder="Cuéntanos algo sobre ti..." oninput="updateProfile()"></textarea>
+        
+        <label>Habilidades (separadas por comas):</label>
+        <input type="text" id="inputSkills" placeholder="Ej: Creativo, Programador, Guitarrista" oninput="updateProfile()">
     </div>
-    <div id="upgrades-container"></div>
+
+    <div class="preview">
+        <h1 class="display-name" id="displayName">Tu Nombre</h1>
+        <p class="display-bio" id="displayBio">Aquí aparecerá tu descripción en tiempo real...</p>
+        <div class="badge-container" id="displaySkills">
+            </div>
+    </div>
 </div>
 
-<div id="game-area">
-    <div id="save-indicator">Progreso Sincronizado</div>
-    
-    <div class="top-controls">
-        <button class="btn-ui" onclick="toggleSidebar()" id="toggle-btn">GESTIÓN</button>
-        <button class="btn-ui" onclick="toggleFullscreen()">FULLSCREEN</button>
-    </div>
+<script>
+    function updateProfile() {
+        // Obtener valores de los inputs
+        const name = document.getElementById('inputName').value;
+        const bio = document.getElementById('inputBio').value;
+        const skills = document.getElementById('inputSkills').value;
 
-    <div id="stats-panel">
-        <div id="total-olives">0</div>
-        <div id="aps-display">0 Aceitunas / seg</div>
-    </div>
+        // Actualizar textos
+        document.getElementById('displayName').innerText = name || "Tu Nombre";
+        document.getElementById('displayBio').innerText = bio || "Aquí aparecerá tu descripción en tiempo real...";
 
-    <div id="olive-stage">
-        <div id="big-olive"></div>
-        <div id="floor-shadow"></div>
-    </div>
-
-    <div style="height: 60px;"></div> <!-- Espaciador inferior para equilibrio visual -->
-</div>
-
-<!-- Firebase SDK -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // --- VARIABLES DE JUEGO ---
-    let olives = 0;
-    let olivesPerSec = 0;
-    let clickPower = 1;
-    let userId = null;
-    let isInitialized = false;
-
-    const upgrades = [
-        { id: 'vareador', name: 'Cuadrilla de Vareadores', cost: 15, aps: 1, count: 0, desc: 'Expertos locales con vara de castaño.' },
-        { id: 'vibrador', name: 'Vibrador de Tronco', cost: 120, aps: 6, count: 0, desc: 'Maquinaria pesada para sacudir el olivo.' },
-        { id: 'almazara', name: 'Almazara Industrial', cost: 1500, aps: 35, count: 0, desc: 'Prensado en frío con tecnología punta.' },
-        { id: 'do_baena', name: 'Denominación de Origen', cost: 18000, aps: 180, count: 0, desc: 'Certificado de excelencia y calidad.' },
-        { id: 'export_asia', name: 'Ruta de Exportación', cost: 200000, aps: 950, count: 0, desc: 'Llevando el sabor a mercados globales.' },
-        { id: 'monopolio', name: 'Dinastía del Aceite', cost: 2500000, aps: 5500, count: 0, desc: 'Control absoluto del sector mundial.' }
-    ];
-
-    const sidebar = document.getElementById('sidebar');
-    const oliveBtn = document.getElementById('big-olive');
-    const oliveDisplay = document.getElementById('total-olives');
-    const apsDisplay = document.getElementById('aps-display');
-    const container = document.getElementById('upgrades-container');
-    const toggleBtn = document.getElementById('toggle-btn');
-    const saveIndicator = document.getElementById('save-indicator');
-
-    // --- FIREBASE SETUP ---
-    const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'aceituna-tycoon-default';
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    async function initAuth() {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            await signInAnonymously(auth);
-        }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            userId = user.uid;
-            await loadProgress();
-            if (!isInitialized) {
-                initGameLoop();
-                isInitialized = true;
-            }
-        }
-    });
-
-    async function saveProgress() {
-        if (!userId) return;
-        try {
-            const progressDoc = doc(db, 'artifacts', appId, 'users', userId, 'gameProgress', 'current');
-            await setDoc(progressDoc, {
-                olives: olives,
-                upgrades: upgrades.map(u => ({ id: u.id, count: u.count, cost: u.cost })),
-                lastSaved: Date.now()
-            });
-            showSaveIndicator();
-        } catch (e) {
-            console.error("Error al guardar:", e);
-        }
-    }
-
-    async function loadProgress() {
-        if (!userId) return;
-        try {
-            const progressDoc = doc(db, 'artifacts', appId, 'users', userId, 'gameProgress', 'current');
-            const snap = await getDoc(progressDoc);
-            if (snap.exists()) {
-                const data = snap.data();
-                olives = data.olives || 0;
-                if (data.upgrades) {
-                    data.upgrades.forEach(savedUp => {
-                        const localUp = upgrades.find(u => u.id === savedUp.id);
-                        if (localUp) {
-                            localUp.count = savedUp.count;
-                            localUp.cost = savedUp.cost;
-                        }
-                    });
+        // Actualizar burbujas de habilidades
+        const skillsContainer = document.getElementById('displaySkills');
+        skillsContainer.innerHTML = ''; // Limpiar previo
+        
+        if (skills) {
+            skills.split(',').forEach(skill => {
+                if (skill.trim() !== "") {
+                    const span = document.createElement('span');
+                    span.className = 'badge';
+                    span.innerText = skill.trim();
+                    skillsContainer.appendChild(span);
                 }
-            }
-            updateStats();
-            updateUI();
-            renderUpgrades();
-        } catch (e) {
-            console.error("Error al cargar:", e);
+            });
         }
     }
-
-    function showSaveIndicator() {
-        saveIndicator.style.opacity = '1';
-        setTimeout(() => { saveIndicator.style.opacity = '0'; }, 2000);
-    }
-
-    // --- LOGICA DE JUEGO ---
-    function initGameLoop() {
-        renderUpgrades();
-        updateUI();
-        setInterval(() => {
-            if (olivesPerSec > 0) {
-                olives += olivesPerSec / 10;
-                updateUI();
-            }
-        }, 100);
-        setInterval(saveProgress, 15000);
-    }
-
-    window.toggleSidebar = () => {
-        const isCollapsed = sidebar.classList.toggle('collapsed');
-        toggleBtn.innerText = isCollapsed ? "MOSTRAR GESTIÓN" : "OCULTAR GESTIÓN";
-    };
-
-    window.toggleFullscreen = () => {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else if (document.exitFullscreen) document.exitFullscreen();
-    };
-
-    function renderUpgrades() {
-        container.innerHTML = '';
-        upgrades.forEach(up => {
-            const card = document.createElement('div');
-            card.id = `upg-${up.id}`;
-            card.className = 'upgrade-card locked';
-            card.innerHTML = `
-                <div class="upgrade-info">
-                    <b>${up.name}</b>
-                    <span>${up.desc}</span>
-                    <div class="upgrade-cost">${format(up.cost)} 🫒</div>
-                </div>
-                <div class="upgrade-count">${up.count}</div>
-            `;
-            card.onclick = (e) => { e.stopPropagation(); buy(up.id); };
-            container.appendChild(card);
-        });
-        updateUI();
-    }
-
-    function format(n) {
-        if (n >= 1000000) return (n/1000000).toFixed(2) + 'M';
-        if (n >= 1000) return (n/1000).toFixed(1) + 'k';
-        return Math.floor(n);
-    }
-
-    oliveBtn.addEventListener('mousedown', (e) => {
-        olives += clickPower;
-        createVisualEffects(e);
-        updateUI();
-    });
-
-    function createVisualEffects(e) {
-        const wave = document.createElement('div');
-        wave.className = 'shockwave';
-        document.getElementById('olive-stage').appendChild(wave);
-        setTimeout(() => wave.remove(), 700);
-
-        const float = document.createElement('div');
-        float.className = 'floating-olive';
-        float.innerHTML = '🫒';
-        const gameAreaRect = document.getElementById('game-area').getBoundingClientRect();
-        float.style.left = (e.clientX - gameAreaRect.left - 15) + 'px'; 
-        float.style.top = (e.clientY - gameAreaRect.top - 15) + 'px';
-        float.style.setProperty('--tx', (Math.random() * 200 - 100) + 'px');
-        document.getElementById('game-area').appendChild(float);
-        setTimeout(() => float.remove(), 1000);
-    }
-
-    function buy(id) {
-        const up = upgrades.find(u => u.id === id);
-        if (olives >= up.cost) {
-            olives -= up.cost;
-            up.count++;
-            up.cost = Math.floor(up.cost * 1.15);
-            updateStats();
-            updateUI();
-            renderUpgrades();
-            saveProgress();
-        }
-    }
-
-    function updateStats() {
-        olivesPerSec = upgrades.reduce((acc, u) => acc + (u.count * u.aps), 0);
-        clickPower = 1 + (olivesPerSec * 0.12); 
-    }
-
-    function updateUI() {
-        oliveDisplay.innerText = format(olives);
-        apsDisplay.innerText = `${format(olivesPerSec)} Aceitunas / segundo`;
-        upgrades.forEach(up => {
-            const card = document.getElementById(`upg-${up.id}`);
-            if (card) {
-                if (olives >= up.cost) card.classList.remove('locked');
-                else card.classList.add('locked');
-            }
-        });
-    }
-
-    initAuth();
 </script>
+
 </body>
 </html>
