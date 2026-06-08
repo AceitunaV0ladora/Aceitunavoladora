@@ -262,5 +262,15 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
+    <script>
+    const passwordCorrecta = "123456789";
+    let intento = prompt("Introduce la contraseña para acceder a AIceituna 1.0:");
+    
+    if (intento !== passwordCorrecta) {
+        alert("Contraseña incorrecta. Acceso denegado.");
+        document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:20%;'>🔒 Acceso Restringido</h1>";
+        window.stop(); // Detiene la carga de la página
+    }
+</script>
 </body>
 </html>
