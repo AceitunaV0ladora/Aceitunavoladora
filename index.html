@@ -3,104 +3,263 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aceituna Voladora</title>
+    <title>AIceituna 1.0 | Inteligencia Artificial</title>
     <style>
-        /* Estilos Base (Modo Oscuro Web/Gaming) */
+        :root {
+            --bg-principal: #0b0c10;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --texto-principal: #c5a059;
+            --texto-blanco: #ffffff;
+            --texto-mutado: #95a5a6;
+            --borde-glass: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #121214;
-            color: #e1e1e6;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-principal);
+            color: var(--texto-blanco);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
             min-height: 100vh;
+        }
+
+        header {
             text-align: center;
+            padding: 30px 20px 10px 20px;
         }
 
         header h1 {
-            font-size: 3rem;
-            color: #04d361;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            color: var(--texto-principal);
+            font-size: 2.2rem;
+            letter-spacing: 1px;
         }
 
-        p {
-            font-size: 1.2rem;
-            color: #a8a8b3;
-            max-width: 600px;
-            line-height: 1.6;
-            padding: 0 20px;
+        header p {
+            color: var(--texto-mutado);
+            font-size: 0.95rem;
         }
 
-        /* Contenedor del Juego / Contenido */
-        #game-container {
-            margin-top: 30px;
-            padding: 40px;
-            background-color: #202024;
+        /* Contenedor del Chat */
+        .chat-container {
+            flex: 1;
+            max-width: 800px;
+            width: 90%;
+            margin: 20px auto;
+            background: var(--bg-card);
+            border: 1px solid var(--borde-glass);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-height: 55vh;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 12px 16px;
             border-radius: 8px;
-            border: 2px solid #29292e;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            transition: transform 0.2s;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
-        #game-container:hover {
-            transform: scale(1.02);
-            border-color: #04d361;
+        .message.user {
+            background-color: var(--texto-principal);
+            color: var(--bg-principal);
+            align-self: flex-end;
+            font-weight: 500;
         }
 
-        /* Botón Interactivo */
-        .btn-launch {
-            background-color: #04d361;
-            color: #000;
+        .message.ai {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--texto-blanco);
+            align-self: flex-start;
+            border: 1px solid var(--borde-glass);
+        }
+
+        /* Zona de Entrada */
+        .chat-input-area {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--borde-glass);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--borde-glass);
+            padding: 12px;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--texto-principal);
+        }
+
+        .btn-send {
+            background: var(--texto-principal);
+            color: var(--bg-principal);
             border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
+            padding: 0 20px;
+            border-radius: 6px;
             font-weight: bold;
-            border-radius: 5px;
             cursor: pointer;
-            text-transform: uppercase;
             transition: background 0.2s;
         }
 
-        .btn-launch:hover {
-            background-color: #00b34d;
+        .btn-send:hover { background: #dcb365; }
+
+        /* Configuración de la API Key (Oculta por defecto) */
+        .config-panel {
+            max-width: 800px;
+            width: 90%;
+            margin: 0 auto 20px auto;
+            padding: 15px;
+            background: rgba(197, 160, 89, 0.05);
+            border: 1px dashed var(--texto-principal);
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .config-panel input {
+            flex: 1;
+            background: #111;
+            border: 1px solid var(--borde-glass);
+            padding: 8px;
+            color: white;
+            border-radius: 4px;
         }
 
         footer {
-            margin-top: 50px;
-            font-size: 0.9rem;
-            color: #7c7c8a;
+            text-align: center;
+            padding: 15px;
+            color: var(--texto-mutado);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--borde-glass);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>Aceituna Voladora</h1>
-        <p>¡Próximamente un nuevo proyecto web y de videojuegos aquí mismo!</p>
+        <h1>AIceituna 1.0</h1>
+        <p>Tu Inteligencia Artificial privada en aceitunavoladora.es</p>
     </header>
 
-    <main>
-        <div id="game-container">
-            <h2>¿Estás listo?</h2>
-            <p>El sitio web está en pleno desarrollo utilizando GitHub Pages.</p>
-            <br>
-            <button class="btn-launch" onclick="lanzarAlerta()">Probar interactividad</button>
+    <div class="config-panel" id="api-panel">
+        <span style="font-size: 0.85rem; color: var(--texto-principal); font-weight: bold;">🔑 Configurar API:</span>
+        <input type="password" id="api-key-input" placeholder="Introduce tu clave de Gemini API para activar el chat...">
+        <button class="btn-send" style="padding: 8px 15px; font-size: 0.85rem;" onclick="guardarLlave()">Guardar</button>
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-messages" id="chat-box">
+            <div class="message ai">¡Hola! Soy <b>AIceituna 1.0</b>, tu entorno de IA personalizado. ¿En qué especificaciones técnicas o desarrollos trabajamos hoy? 🚀🫒</div>
         </div>
-    </main>
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." onkeypress="detectarEnter(event)">
+            <button class="btn-send" onclick="enviarMensaje()">Enviar</button>
+        </div>
+    </div>
 
     <footer>
-        <p>&copy; 2026 aceitunavoladora.es - Todos los derechos reservados.</p>
+        &copy; 2026 aceitunavoladora.es - Procesamiento local seguro via Google Gemini API.
     </footer>
 
     <script>
-        // Lógica interactiva básica (puedes meter aquí tu código JS o enlazar un script externo)
-        function lanzarAlerta() {
-            alert("¡La aceituna ha despegado con éxito! 🚀🫒 El código JavaScript funciona correctamente.");
+        // Cargar API Key guardada automáticamente si existe
+        window.onload = function() {
+            const savedKey = localStorage.getItem('gemini_key');
+            if(savedKey) {
+                document.getElementById('api-key-input').value = savedKey;
+                document.getElementById('api-panel').style.opacity = "0.4"; // Atenuar si ya está guardada
+            }
+        }
+
+        function guardarLlave() {
+            const key = document.getElementById('api-key-input').value.trim();
+            if(key) {
+                localStorage.setItem('gemini_key', key);
+                alert("🔑 Clave guardada localmente con éxito en tu navegador de forma segura.");
+                document.getElementById('api-panel').style.opacity = "0.4";
+            }
+        }
+
+        function detectarEnter(e) {
+            if (e.key === 'Enter') enviarMensaje();
+        }
+
+        async function enviarMensaje() {
+            const inputElement = document.getElementById('user-input');
+            const chatBox = document.getElementById('chat-box');
+            const mensajeTexto = inputElement.value.trim();
+            const apiKey = localStorage.getItem('gemini_key') || document.getElementById('api-key-input').value.trim();
+
+            if (!mensajeTexto) return;
+            if (!apiKey) {
+                alert("Por favor, introduce y guarda tu API Key en el panel superior para poder hablar con la IA.");
+                return;
+            }
+
+            // Mostrar mensaje del usuario
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message user';
+            userDiv.innerText = mensajeTexto;
+            chatBox.appendChild(userDiv);
+            inputElement.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Mostrar mensaje de carga de la IA
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'message ai';
+            aiDiv.innerText = 'Pensando... 🫒';
+            chatBox.appendChild(aiDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Petición directa a la API de Gemini (Modelo estable 1.5 Flash)
+            try {
+                // System prompt para inyectar la personalidad de la web
+                const systemInstruction = "Eres AIceituna 1.0, una IA integrada en el dominio profesional aceitunavoladora.es. Eres un experto en desarrollo, automatizaciones y sistemas. Tus respuestas son claras, concisas y bien explicadas. De vez en cuando, haz un guiño sutil a tu identidad aérea u olivarera (ej. usando un emoji de aceituna 🫒 o cohete 🚀), pero manteniendo siempre un tono muy profesional.";
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: mensajeTexto }] }],
+                        systemInstruction: { parts: [{ text: systemInstruction }] }
+                    })
+                });
+
+                const data = await response.json();
+                
+                if(data.candidates && data.candidates[0].content.parts[0].text) {
+                    aiDiv.innerText = data.candidates[0].content.parts[0].text;
+                } else {
+                    aiDiv.innerText = "Error en el formato de respuesta de la IA. Comprueba tu API key.";
+                }
+            } catch (error) {
+                console.error(error);
+                aiDiv.innerText = "Hubo un error de conexión con la API de Gemini. Asegúrate de que tu clave es válida.";
+            }
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
     </script>
 </body>
