@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aceituna Voladora</title>
+    <style>
+        /* Estilos Base (Modo Oscuro Web/Gaming) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            color: #04d361;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #a8a8b3;
+            max-width: 600px;
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        /* Contenedor del Juego / Contenido */
+        #game-container {
+            margin-top: 30px;
+            padding: 40px;
+            background-color: #202024;
+            border-radius: 8px;
+            border: 2px solid #29292e;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s;
+        }
+
+        #game-container:hover {
+            transform: scale(1.02);
+            border-color: #04d361;
+        }
+
+        /* Botón Interactivo */
+        .btn-launch {
+            background-color: #04d361;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+
+        .btn-launch:hover {
+            background-color: #00b34d;
+        }
+
+        footer {
+            margin-top: 50px;
+            font-size: 0.9rem;
+            color: #7c7c8a;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Aceituna Voladora</h1>
+        <p>¡Próximamente un nuevo proyecto web y de videojuegos aquí mismo!</p>
+    </header>
+
+    <main>
+        <div id="game-container">
+            <h2>¿Estás listo?</h2>
+            <p>El sitio web está en pleno desarrollo utilizando GitHub Pages.</p>
+            <br>
+            <button class="btn-launch" onclick="lanzarAlerta()">Probar interactividad</button>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 aceitunavoladora.es - Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Lógica interactiva básica (puedes meter aquí tu código JS o enlazar un script externo)
+        function lanzarAlerta() {
+            alert("¡La aceituna ha despegado con éxito! 🚀🫒 El código JavaScript funciona correctamente.");
+        }
+    </script>
+</body>
+</html>
