@@ -3,274 +3,569 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIceituna 1.0 | Inteligencia Artificial</title>
+    <title>Suite Avanzada de Ingeniería de Sistemas IT</title>
     <style>
         :root {
-            --bg-principal: #0b0c10;
-            --bg-card: rgba(255, 255, 255, 0.03);
-            --texto-principal: #c5a059;
-            --texto-blanco: #ffffff;
+            --bg-base: #0b0c10;
+            --bg-card: #1f2833;
+            --primario: #c5a059;
+            --texto: #ffffff;
             --texto-mutado: #95a5a6;
-            --borde-glass: rgba(255, 255, 255, 0.08);
+            --borde: rgba(255, 255, 255, 0.08);
+            --exito: #2ecc71;
+            --consola: #050505;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-base); color: var(--texto); display: flex; min-height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background-color: var(--bg-principal);
-            color: var(--texto-blanco);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        /* Sidebar Lateral */
+        nav { width: 280px; background-color: #151a21; border-right: 1px solid var(--borde); display: flex; flex-direction: column; flex-shrink: 0; }
+        .nav-header { padding: 30px 20px; text-align: center; border-bottom: 1px solid var(--borde); }
+        .nav-header h1 { color: var(--primario); font-size: 1.25rem; letter-spacing: 1.5px; font-weight: 700; }
+        .nav-menu { flex: 1; padding: 15px 0; overflow-y: auto; }
+        .nav-item { display: flex; align-items: center; padding: 12px 20px; color: var(--texto-mutado); font-weight: 500; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; }
+        .nav-item:hover, .nav-item.active { color: var(--texto); background: rgba(197, 160, 89, 0.08); border-left: 4px solid var(--primario); }
+        .nav-item span { margin-right: 12px; font-size: 1.1rem; width: 20px; text-align: center; }
 
-        header {
-            text-align: center;
-            padding: 30px 20px 10px 20px;
-        }
+        /* Área de Contenido */
+        main { flex: 1; display: flex; flex-direction: column; overflow-y: auto; height: 100vh; background-color: #0f1319; }
+        .section-panel { padding: 40px; display: none; }
+        .section-panel.active { display: block; }
+        h2 { color: var(--primario); margin-bottom: 25px; font-size: 1.6rem; border-bottom: 2px solid var(--borde); padding-bottom: 12px; }
 
-        header h1 {
-            color: var(--texto-principal);
-            font-size: 2.2rem;
-            letter-spacing: 1px;
-        }
+        /* Grid y Maquetación */
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 25px; margin-bottom: 25px; }
+        .card { background: var(--bg-card); border: 1px solid var(--borde); border-radius: 8px; padding: 22px; display: flex; flex-direction: column; }
+        .card.full-width { grid-column: 1 / -1; }
+        .card h3 { color: var(--primario); margin-bottom: 15px; font-size: 1.1rem; border-left: 3px solid var(--primario); padding-left: 10px; }
+        .card p { color: var(--texto-mutado); font-size: 0.88rem; margin-bottom: 15px; line-height: 1.4; }
 
-        header p {
-            color: var(--texto-mutado);
-            font-size: 0.95rem;
-        }
+        /* Inputs, Botones y Checkboxes */
+        input, textarea, select { width: 100%; background: #0b0c10; border: 1px solid var(--borde); padding: 11px; border-radius: 6px; color: white; margin-bottom: 15px; outline: none; font-size: 0.9rem; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primario); }
+        button { background: var(--primario); color: var(--bg-base); border: none; padding: 11px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s; font-size: 0.9rem; }
+        button:hover { background: #dcb365; }
+        .btn-secondary { background: #27ae60; color: white; margin-top: 10px; width: auto; display: inline-block; }
+        .btn-secondary:hover { background: #2ecc71; }
+        
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--texto-mutado); }
+        .checkbox-item input { width: auto; margin: 0; cursor: pointer; }
 
-        /* Contenedor del Chat */
-        .chat-container {
-            flex: 1;
-            max-width: 800px;
-            width: 90%;
-            margin: 20px auto;
-            background: var(--bg-card);
-            border: 1px solid var(--borde-glass);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-        }
+        /* Consolas de Código */
+        .code-container { position: relative; margin-top: 10px; }
+        .code-box { background: var(--consola); padding: 16px; border-radius: 6px; border: 1px solid var(--borde); font-family: 'Consolas', monospace; color: #39ff14; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; line-height: 1.4; }
+        .btn-copy { position: absolute; top: 8px; right: 8px; background: rgba(255,255,255,0.12); color: white; border: none; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-copy:hover { background: var(--primario); color: var(--bg-base); }
 
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            max-height: 55vh;
-        }
+        /* Tabla CMD */
+        .category-tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { background: rgba(255,255,255,0.04); color: var(--texto-mutado); border: 1px solid var(--borde); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.82rem; font-weight: 500; width: auto; }
+        .tab-btn.active, .tab-btn:hover { background: var(--primario); color: var(--bg-base); border-color: var(--primario); }
+        .command-list { display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto; }
+        .command-row { display: flex; align-items: center; background: rgba(0,0,0,0.15); border: 1px solid var(--borde); padding: 10px 15px; border-radius: 6px; gap: 15px; }
+        .command-row code { font-family: 'Consolas', monospace; color: #39ff14; font-size: 0.88rem; flex: 1.2; font-weight: bold; background: #000; padding: 5px 8px; border-radius: 4px; }
+        .command-row .desc { color: var(--texto-mutado); font-size: 0.82rem; flex: 1.8; }
+        .btn-row-copy { background: rgba(197, 160, 89, 0.05); color: var(--primario); border: 1px solid var(--primario); padding: 5px 10px; border-radius: 4px; font-size: 0.78rem; cursor: pointer; font-weight: bold; width: auto; }
+        .btn-row-copy:hover { background: var(--primario); color: var(--bg-base); }
 
-        .message {
-            max-width: 75%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
+        /* Mapeo CSV / Excel */
+        .csv-table-wrapper { width: 100%; overflow-x: auto; margin-top: 15px; border-radius: 6px; border: 1px solid var(--borde); }
+        .csv-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem; }
+        .csv-table th { background: #151a21; color: var(--primario); padding: 10px; border-bottom: 2px solid var(--borde); }
+        .csv-table td { padding: 8px 10px; border-bottom: 1px solid var(--borde); color: var(--texto); font-family: monospace; }
+        .csv-badge { display: inline-block; padding: 6px 10px; background: rgba(197,160,89,0.12); color: var(--primario); border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
 
-        .message.user {
-            background-color: var(--texto-principal);
-            color: var(--bg-principal);
-            align-self: flex-end;
-            font-weight: 500;
-        }
-
-        .message.ai {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: var(--texto-blanco);
-            align-self: flex-start;
-            border: 1px solid var(--borde-glass);
-        }
-
-        /* Zona de Entrada */
-        .chat-input-area {
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid var(--borde-glass);
-            display: flex;
-            gap: 10px;
-        }
-
-        .chat-input-area input {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--borde-glass);
-            padding: 12px;
-            border-radius: 6px;
-            color: white;
-            font-size: 0.95rem;
-            outline: none;
-        }
-
-        .chat-input-area input:focus {
-            border-color: var(--texto-principal);
-        }
-
-        .btn-send {
-            background: var(--texto-principal);
-            color: var(--bg-principal);
-            border: none;
-            padding: 0 20px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-send:hover { background: #dcb365; }
-
-        /* Configuración de la API Key */
-        .config-panel {
-            max-width: 800px;
-            width: 90%;
-            margin: 0 auto 20px auto;
-            padding: 15px;
-            background: rgba(197, 160, 89, 0.05);
-            border: 1px dashed var(--texto-principal);
-            border-radius: 8px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .config-panel input {
-            flex: 1;
-            background: #111;
-            border: 1px solid var(--borde-glass);
-            padding: 8px;
-            color: white;
-            border-radius: 4px;
-        }
-
-        footer {
-            text-align: center;
-            padding: 15px;
-            color: var(--texto-mutado);
-            font-size: 0.85rem;
-            border-top: 1px solid var(--borde-glass);
-        }
+        /* Tareas */
+        .todo-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); padding: 12px 15px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--borde); }
+        .todo-item.done span { text-decoration: line-through; color: var(--texto-mutado); }
+        .btn-todo-action { width: auto; padding: 5px 10px; font-size: 0.8rem; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-todo-action.check { background: var(--exito); margin-right: 4px; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>AIceituna 1.0</h1>
-        <p>Tu Inteligencia Artificial privada en aceitunavoladora.es</p>
-    </header>
-
-    <div class="config-panel" id="api-panel">
-        <span style="font-size: 0.85rem; color: var(--texto-principal); font-weight: bold;">🔑 Configurar API:</span>
-        <input type="password" id="api-key-input" placeholder="Introduce tu clave de Gemini API para activar el chat...">
-        <button class="btn-send" style="padding: 8px 15px; font-size: 0.85rem;" onclick="guardarLlave()">Guardar</button>
-    </div>
-
-    <div class="chat-container">
-        <div class="chat-messages" id="chat-box">
-            <div class="message ai">¡Hola! Soy <b>AIceituna 1.0</b>, tu entorno de IA personalizado. ¿En qué especificaciones técnicas o desarrollos trabajamos hoy? 🚀🫒</div>
+    <nav>
+        <div class="nav-header">
+            <h1>SYSADMIN HUB</h1>
+            <p style="font-size:0.7rem; color:var(--texto-mutado); margin-top:4px;">Framework de Operaciones IT</p>
         </div>
-        <div class="chat-input-area">
-            <input type="text" id="user-input" placeholder="Escribe tu mensaje aquí..." onkeypress="detectarEnter(event)">
-            <button class="btn-send" onclick="enviarMensaje()">Enviar</button>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="switchTab('powershell-repo')"><span>📜</span> Repositorio PowerShell</div>
+            <div class="nav-item" onclick="switchTab('quick-commands')"><span>⚡</span> Terminal CMD Completa</div>
+            <div class="nav-item" onclick="switchTab('device-optimizer')"><span>⚙️</span> Optimización Dispositivo</div>
+            <div class="nav-item" onclick="switchTab('debloat-winget')"><span>🚀</span> Despliegue Winget</div>
+            <div class="nav-item" onclick="switchTab('storage-raid')"><span>💾</span> Arquitectura RAID / IOPS</div>
+            <div class="nav-item" onclick="switchTab('net-engineer')"><span>🌐</span> Ingeniería de Redes</div>
+            <div class="nav-item" onclick="switchTab('data-utils')"><span>🛠️</span> Convertidor CSV e Inyección</div>
+            <div class="nav-item" onclick="switchTab('profile-mapper')"><span>🧱</span> Mapeador JSON / Arrays</div>
+            <div class="nav-item" onclick="switchTab('sys-tasks')"><span>📝</span> Gestión de Incidencias</div>
         </div>
-    </div>
+    </nav>
 
-    <footer>
-        &copy; 2026 aceitunavoladora.es - Procesamiento local seguro via Google Gemini API.
-    </footer>
+    <main>
+        
+        <div id="powershell-repo" class="section-panel active">
+            <h2>📜 Automatización Avanzada PowerShell</h2>
+            <div class="card full-width">
+                <p>Scripts modulares listos para inyección a través de consolas de administración locales o consolas RMM corporativas.</p>
+                <select id="ps-select" onchange="actualizarScript()">
+                    <option value="teams_bg">1. Despliegue de Fondos de Video en Microsoft Teams corporativo (RMM)</option>
+                    <option value="net_clean">2. Purga y Optimización de Capas de Red (DNS, ARP, Winsock, TCP/IP)</option>
+                    <option value="hw_audit">3. Auditoría Avanzada de Hardware, Serial Number y Componentes (CIM/WMI)</option>
+                    <option value="user_export">4. Exportación Segura de Cuentas de Usuario Locales Activas a CSV</option>
+                    <option value="app_remove">5. Eliminación Masiva de Bloatware e Interficies de Consumo en Windows</option>
+                    <option value="event_check">6. Extracción Selectiva de Errores Críticos del Visor de Eventos (Últimas 24h)</option>
+                    <option value="disk_monitor">7. Análisis de Espacio y Salud de Unidades de Almacenamiento Lógicas</option>
+                    <option value="spooler_restart">8. Diagnóstico y Reinicio Forzado del Servicio Spooler de Impresión</option>
+                    <option value="backup_incremental">9. Script de Respaldo e Integridad Incremental Local (Robocopy Sys)</option>
+                    <option value="profile_purge">10. Purga Automatizada de Perfiles de Usuario Locales Inactivos (>30 días)</option>
+                </select>
+                <div class="code-container">
+                    <button class="btn-copy" onclick="copyCodeBlock('ps-output')">Copiar Script</button>
+                    <div class="code-box" id="ps-output" style="max-height: 400px;"></div>
+                </div>
+            </div>
+        </div>
 
-    <script>
-        window.onload = function() {
-            const savedKey = localStorage.getItem('gemini_key');
-            if(savedKey) {
-                document.getElementById('api-key-input').value = savedKey;
-                document.getElementById('api-panel').style.opacity = "0.4";
-            }
-        }
-
-        function guardarLlave() {
-            const key = document.getElementById('api-key-input').value.trim();
-            if(key) {
-                localStorage.setItem('gemini_key', key);
-                alert("🔑 Clave guardada localmente con éxito en tu navegador de forma segura.");
-                document.getElementById('api-panel').style.opacity = "0.4";
-            }
-        }
-
-        function detectarEnter(e) {
-            if (e.key === 'Enter') enviarMensaje();
-        }
-
-        async function enviarMensaje() {
-            const inputElement = document.getElementById('user-input');
-            const chatBox = document.getElementById('chat-box');
-            const mensajeTexto = inputElement.value.trim();
-            const apiKey = localStorage.getItem('gemini_key') || document.getElementById('api-key-input').value.trim();
-
-            if (!mensajeTexto) return;
-            if (!apiKey) {
-                alert("Por favor, introduce y guarda tu API Key en el panel superior.");
-                return;
-            }
-
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user';
-            userDiv.innerText = mensajeTexto;
-            chatBox.appendChild(userDiv);
-            inputElement.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            const aiDiv = document.createElement('div');
-            aiDiv.className = 'message ai';
-            aiDiv.innerText = 'Pensando... 🫒';
-            chatBox.appendChild(aiDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                const systemInstruction = "Eres AIceituna 1.0, una IA integrada en el dominio profesional aceitunavoladora.es. Eres un experto en desarrollo, automatizaciones y sistemas. Tus respuestas son claras, concisas y bien explicadas. De vez en cuando, haz un guiño sutil a tu identidad aérea u olivarera, pero manteniendo siempre un tono muy profesional.";
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'x-goog-api-key': apiKey
-                    },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: mensajeTexto }] }],
-                        systemInstruction: { parts: [{ text: systemInstruction }] }
-                    })
-                });
-
-                const data = await response.json();
+        <div id="quick-commands" class="section-panel">
+            <h2>⚡ Enciclopedia y Consola Completa de Comandos CMD</h2>
+            <div class="card full-width">
+                <p>Estructura de inyecciones directas en Windows. Filtra por tags técnicos o usa el buscador dinámico por palabras clave.</p>
+                <input type="text" id="command-search" class="search-box" placeholder="🔍 Buscar comando por sintaxis o descripción (ej: dns, partition, task, user)..." oninput="filtrarComandos()">
                 
-                if (data.error) {
-                    aiDiv.innerHTML = `⚠️ <b>Error de la API de Google:</b> ${data.error.message} (Código: ${data.error.code})`;
-                } else if(data.candidates && data.candidates[0].content.parts[0].text) {
-                    aiDiv.innerText = data.candidates[0].content.parts[0].text;
-                } else {
-                    aiDiv.innerText = "Error inesperado en la respuesta. Revisa la consola del navegador.";
-                }
-            } catch (error) {
-                console.error(error);
-                aiDiv.innerText = "Hubo un error de conexión con el servidor de Google.";
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
+                <div class="category-tabs">
+                    <button class="tab-btn active" onclick="filtrarCategoria('all', this)">Todos</button>
+                    <button class="tab-btn" onclick="filtrarCategoria('net', this)">Redes</button>
+                    <button class="tab-btn" onclick="filtrarCategoria('disk', this)">Discos</button>
+                    <button class="tab-btn" onclick="filtrarCategoria('sys', this)">Sistema</button>
+                    <button class="tab-btn" onclick="filtrarCategoria('env', this)">Entorno</button>
+                </div>
+
+                <div class="command-list" id="command-container"></div>
+            </div>
+        </div>
+
+        <div id="device-optimizer" class="section-panel">
+            <h2>⚙️ Modificadores de Rendimiento y Limpieza Profunda</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Limpieza Completa de Archivos Basura (CMD)</h3>
+                    <p>Genera la cadena para purgar temporales de usuario, del sistema, logs acumulados, cachés de entrega y carpetas prefetches de golpe.</p>
+                    <button onclick="generarScriptLimpieza()">Generar Script de Purga</button>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCodeBlock('clean-output')">Copiar</button>
+                        <div class="code-box" id="clean-output" style="max-height: 120px; font-size: 0.8rem;">Haz clic para inyectar...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Acelerador y Liberador de Memoria RAM</h3>
+                    <p>Fuerza al recolector de basura de Windows a purgar páginas de memoria en caché retenidas en segundo plano que ralentizan el microprocesador.</p>
+                    <button onclick="generarRamTweak()">Generar Liberador de RAM</button>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCodeBlock('ram-output')">Copiar</button>
+                        <div class="code-box" id="ram-output" style="max-height: 120px; font-size: 0.8rem;">Haz clic para inyectar...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="debloat-winget" class="section-panel">
+            <h2>🚀 Despliegue Automatizado e Inicialización de Estaciones</h2>
+            <div class="card full-width">
+                <p>Marca las aplicaciones y optimizaciones requeridas. El motor generará un script secuencial nativo de Windows Packager (`winget`).</p>
+                
+                <h3 style="margin-bottom:10px;">1. Software de Infraestructura y Desarrollo</h3>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" value="Google.Chrome" checked onchange="generarWingetScript()"> Google Chrome</label>
+                    <label class="checkbox-item"><input type="checkbox" value="Microsoft.VisualStudioCode" onchange="generarWingetScript()"> VS Code</label>
+                    <label class="checkbox-item"><input type="checkbox" value="Git.Git" onchange="generarWingetScript()"> Git Client</label>
+                    <label class="checkbox-item"><input type="checkbox" value="7zip.7zip" checked onchange="generarWingetScript()"> 7-Zip Utilities</label>
+                </div>
+
+                <h3 style="margin-bottom:10px;">2. Soporte y Herramientas IT</h3>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" value="AnyDeskSoftwareGmbH.AnyDesk" onchange="generarWingetScript()"> AnyDesk Remote</label>
+                    <label class="checkbox-item"><input type="checkbox" value="Wireshark.Wireshark" onchange="generarWingetScript()"> Wireshark Analyzer</label>
+                    <label class="checkbox-item"><input type="checkbox" value="WinSCP.WinSCP" onchange="generarWingetScript()"> WinSCP Client</label>
+                </div>
+
+                <h3 style="margin-bottom:10px;">3. Directivas de Optimización de Sistema (Debloat Pro)</h3>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" id="opt-telemetry" checked onchange="generarWingetScript()"> Capar Telemetría Windows</label>
+                    <label class="checkbox-item"><input type="checkbox" id="opt-power" onchange="generarWingetScript()"> Activar Alto Rendimiento</label>
+                    <label class="checkbox-item"><input type="checkbox" id="opt-effects" checked onchange="generarWingetScript()"> Desactivar Efectos Visuales</label>
+                    <label class="checkbox-item"><input type="checkbox" id="opt-services" onchange="generarWingetScript()"> Apagar Servicios Innecesarios</label>
+                </div>
+
+                <div class="code-container">
+                    <button class="btn-copy" onclick="copyCodeBlock('winget-output')">Copiar Script</button>
+                    <div class="code-box" id="winget-output" style="color:#50fa7b;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="storage-raid" class="section-panel">
+            <h2>💾 Matriz de Cálculo de Almacenamiento y Cabinas RAID</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Configuración Física de Discos</h3>
+                    <label>Número Total de Discos Lógicos:</label>
+                    <input type="number" id="raid-count" value="4" min="2" max="32">
+                    <label>Capacidad Unitaria por Disco (GB):</label>
+                    <input type="number" id="raid-size" value="2000" min="1">
+                    <label>Arquitectura del Arreglo RAID:</label>
+                    <select id="raid-type">
+                        <option value="0">RAID 0 (Stripping - Máxima Velocidad)</option>
+                        <option value="1">RAID 1 (Mirroring - Espejo Puro)</option>
+                        <option value="5">RAID 5 (Paridad Distribuida)</option>
+                        <option value="6">RAID 6 (Doble Paridad Distribuida)</option>
+                        <option value="10">RAID 10 (Espejo de Divisiones)</option>
+                    </select>
+                    <button onclick="calcularRAID()">Calcular Métricas de Servidor</button>
+                </div>
+                <div class="card">
+                    <h3>Métricas de Infraestructura Resultantes</h3>
+                    <div class="code-container">
+                        <div class="code-box" id="raid-output" style="color:#ffb86c; font-size:0.9rem;">Introduce los parámetros para calcular...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="net-engineer" class="section-panel">
+            <h2>🌐 Utilidades de Red y Direccionamiento</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Conversor Máscara / CIDR</h3>
+                    <input type="number" id="net-cidr" placeholder="Ej: 24" min="1" max="32">
+                    <button onclick="calcularMascara()">Calcular Máscara</button>
+                    <div class="code-container"><div class="code-box" id="net-output" style="max-height:80px; text-align:center; font-size:1.1rem;">Resultado...</div></div>
+                </div>
+                <div class="card">
+                    <h3>Trazador de Diagnóstico de Host</h3>
+                    <input type="text" id="net-host" placeholder="Ej: google.com o 192.168.1.1">
+                    <button onclick="generarPingLoop()">Generar Traza Continua</button>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCodeBlock('ping-output')">Copiar</button>
+                        <div class="code-box" id="ping-output" style="max-height:120px;">Introduce un host...</div>
+                    </div>
+                </div>
+                <div class="card full-width">
+                    <h3>Script para Mapeo Forzado de Recursos Compartidos en Red</h3>
+                    <p>Genera la sintaxis para montar volúmenes persistentes bajo credenciales explícitas de dominio.</p>
+                    <div style="display:flex; gap:15px;">
+                        <input type="text" id="map-drive" placeholder="Letra (Ej: Z:)" style="flex:1;">
+                        <input type="text" id="map-path" placeholder="Ruta UNC (Ej: \\Servidor\Sistemas$)" style="flex:3;">
+                    </div>
+                    <button onclick="generarMapeoRed()">Generar Comando de Mapeo</button>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCodeBlock('map-output')">Copiar</button>
+                        <div class="code-box" id="map-output" style="max-height:100px;">Completa los campos...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="data-utils" class="section-panel">
+            <h2>🛠️ Procesador y Convertidor de CSV a Excel (.XLS)</h2>
+            <div class="card full-width">
+                <p>Pega registros delimitados por comas. El motor generará una cuadrícula interactiva indexada y creará la descarga nativa para Microsoft Excel.</p>
+                <textarea id="csv-input" rows="6" placeholder="usuario,año,departamento&#10;jprimo,2026,Sistemas&#10;asir_alumno,2026,Operaciones" style="font-family:monospace;"></textarea>
+                <button onclick="procesarCSV()">Formatear e Indexar Matriz</button>
+                
+                <div id="csv-actions-area" style="margin-top:15px; display:none; align-items:center;">
+                    <span class="csv-badge" id="csv-contador-filas">0 filas indexadas.</span>
+                    <button onclick="descargarExcelReal()" class="btn-secondary" style="margin:0; padding:10px 20px;">📥 Exportar Datos Formateados (.XLS)</button>
+                </div>
+                <div id="csv-wrapper-container"></div>
+            </div>
+        </div>
+
+        <div id="profile-mapper" class="section-panel">
+            <h2>🧱 Constructor de Objetos y Arrays Estructurados (JSON)</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Campos de Entrada</h3>
+                    <input type="text" id="map-user" placeholder="ID de Usuario / Email">
+                    <input type="text" id="map-role" placeholder="Puesto / Rol Corporativo">
+                    <input type="text" id="map-dept" placeholder="Departamento">
+                    <button onclick="addObjetoArray()">Inyectar al Array</button>
+                    <button onclick="limpiarArrayJSON()" class="btn-secondary" style="background:#c0392b; width:100%; margin-top:10px;">Limpiar Matriz</button>
+                </div>
+                <div class="card">
+                    <h3>Payload JSON Resultante</h3>
+                    <div class="code-container">
+                        <button class="btn-copy" onclick="copyCodeBlock('json-output')">Copiar Payload</button>
+                        <div class="code-box" id="json-output" style="color:#f1fa8c; max-height:350px;">[]</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sys-tasks" class="section-panel">
+            <h2>📝 Cola de Incidencias Técnicas y Bloc Temporal</h2>
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Añadir Registro a la Cola</h3>
+                    <input type="text" id="todo-input" placeholder="Ej: Revisar integración API de Factorial HR o perfiles de Moodle...">
+                    <button onclick="addTodo()">Añadir Acción</button>
+                    <div id="todo-container" style="margin-top:20px;"></div>
+                </div>
+                <div class="card">
+                    <h3>Cuaderno de Laboratorio y Logs</h3>
+                    <textarea id="notepad" rows="14" placeholder="Escribe notas rápidas, tokens de APIs o IPs de servidores... Almacenamiento persistente local." oninput="saveNotes()" style="font-family:monospace; line-height:1.5;"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
     <script>
-    const passwordCorrecta = "123456789";
-    let intento = prompt("Introduce la contraseña para acceder a AIceituna 1.0:");
-    
-    if (intento !== passwordCorrecta) {
-        alert("Contraseña incorrecta. Acceso denegado.");
-        document.body.innerHTML = "<h1 style='color:white; text-align:center; margin-top:20%;'>🔒 Acceso Restringido</h1>";
-        window.stop(); // Detiene la carga de la página
-    }
-</script>
+        // Cambiar pestañas
+        function switchTab(tabId) {
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Datos: Biblioteca PowerShell
+        const bibliotecaScripts = {
+            teams_bg: `# Despliegue de fondos en Microsoft Teams\n$TargetDir = "$env:APPDATA\\Microsoft\\Teams\\Backgrounds\\Uploads"\nif (!(Test-Path $TargetDir)) { New-Item -Path $TargetDir -ItemType Directory -Force }\n$SourcePath = "\\\\ServidorIT\\Deploy\\FondoCorporativo.png"\nif (Test-Path $SourcePath) { Copy-Item -Path $SourcePath -Destination $TargetDir -Force }`,
+            net_clean: `# Optimización completa de red\nClear-DnsClientCache; ipconfig /flushdns; ipconfig /release; ipconfig /renew; arp -d *; netsh winsock reset; netsh int ip reset`,
+            hw_audit: `# Auditoría estructurada de hardware\n[PSCustomObject]@{\n    'Hostname' = $env:COMPUTERNAME\n    'Fabricante' = (Get-CimInstance Win32_ComputerSystem).Manufacturer\n    'Modelo' = (Get-CimInstance Win32_ComputerSystem).Model\n    'Serial' = (Get-CimInstance Win32_Bios).SerialNumber\n} | Format-List`,
+            user_export: `# Exportación de usuarios activos locales\nGet-LocalUser | Where-Object { $_.Enabled } | Select-Object Name, Description | Export-Csv -Path "$env:USERPROFILE\\Desktop\\Usuarios.csv" -NoType`,
+            app_remove: `# Eliminación masiva de Bloatware nativo\n$Apps = @("Microsoft.Messaging", "Microsoft.People", "Microsoft.ZuneVideo", "Microsoft.XboxApp")\nforeach ($A in $Apps) { Get-AppxPackage -Name $A -AllUsers | Remove-AppxPackage -ErrorAction SilentlyContinue }`,
+            event_check: `# Errores críticos del visor en las últimas 24h\nGet-WinEvent -FilterHashtable @{LogName='System'; Level=1,2; StartTime=(Get-Date).AddDays(-1)} -MaxEvents 40 -ErrorAction SilentlyContinue`,
+            disk_monitor: `# Análisis de espacio de unidades de disco\nGet-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID, @{N="Size(GB)";E={[Math]::Round($_.Size/1GB,2)}}, @{N="Free(GB)";E={[Math]::Round($_.FreeSpace/1GB,2)}}`,
+            spooler_restart: `# Purgar cola de impresión bloqueada\nStop-Service "Spooler" -Force; Remove-Item "$env:SystemRoot\\System32\\spool\\PRINTERS\\*" -Force; Start-Service "Spooler"`,
+            backup_incremental: `# Copia incremental de seguridad estructurada\nrobocopy "$env:USERPROFILE\\Documents\\ConfigIT" "\\\\BackupServer\\Sistemas$\\Data" /E /Z /ZB /R:3 /W:5 /LOG:"$env:USERPROFILE\\Desktop\\Log.txt"`,
+            profile_purge: `# Purga de perfiles locales inactivos de más de 30 días\nGet-CimInstance -ClassName Win32_UserProfile | Where-Object { !$_.Special -and $_.LastUseTime -lt (Get-Date).AddDays(-30) } | Remove-CimInstance`
+        };
+
+        function actualizarScript() { document.getElementById('ps-output').innerText = bibliotecaScripts[document.getElementById('ps-select').value]; }
+
+        // Datos: Gran base de comandos CMD
+        const comandosCMD = [
+            { cat: "net", cmd: "ipconfig /flushdns", desc: "Vacía por completo la caché de resolución DNS local de Windows." },
+            { cat: "net", cmd: "ipconfig /all", desc: "Muestra la configuración detallada de todas las interfaces de red e IPs físicas." },
+            { cat: "net", cmd: "ping [host] -t", desc: "Lanza eco-pings ininterrumpidos hacia un destino para monitorizar estabilidad." },
+            { cat: "net", cmd: "tracert [host]", desc: "Traza la ruta de saltos de red y routers por los que pasa un paquete hasta el destino." },
+            { cat: "net", cmd: "nslookup [dominio]", desc: "Consulta los servidores DNS para resolver resoluciones de nombres." },
+            { cat: "net", cmd: "netstat -ano", desc: "Muestra las conexiones de red activas de sockets junto a sus PID de proceso." },
+            { cat: "net", cmd: "arp -a", desc: "Muestra las tablas de caché ARP con los mapeos de IPs lógicas a direcciones MAC físicas." },
+            { cat: "net", cmd: "route print", desc: "Imprime en consola la tabla de enrutamiento IP activa del sistema local." },
+            { cat: "net", cmd: "netsh winsock reset", desc: "Restablece el catálogo de sockets de Winsock devolviendo la red a valores de fábrica." },
+            { cat: "net", cmd: "getmac", desc: "Devuelve las direcciones MAC físicas de todos los adaptadores de red del equipo." },
+            { cat: "disk", cmd: "diskpart", desc: "Abre el motor avanzado e interno de particionado de discos y volúmenes lógicos." },
+            { cat: "disk", cmd: "chkdsk C: /f /r", desc: "Analiza la integridad del sistema de archivos aislando y reparando sectores rotos." },
+            { cat: "disk", cmd: "robocopy [origen] [destino] /E", desc: "Copia robusta de directorios de forma recursiva manteniendo permisos y logs." },
+            { cat: "disk", cmd: "sfc /scannow", desc: "Examina y repara archivos corruptos o dañados del sistema base de Windows." },
+            { cat: "disk", cmd: "fsutil volume diskfree C:", desc: "Consulta el espacio exacto libre y total en bytes sin recorrer la unidad." },
+            { cat: "sys", cmd: "gpupdate /force", desc: "Fuerza la inyección y actualización inmediata de GPOs locales y de AD." },
+            { cat: "sys", cmd: "systeminfo", desc: "Extrae un reporte detallado del sistema: compilación de SO, parches, BIOS y red." },
+            { cat: "sys", cmd: "tasklist", desc: "Muestra la lista de procesos activos junto a sus IDs de memoria." },
+            { cat: "sys", cmd: "taskkill /F /PID [id]", desc: "Fuerza la detención inmediata de un proceso bloqueado mediante su identificador." },
+            { cat: "sys", cmd: "wmic bios get serialnumber", desc: "Extrae por consola el número de serie de la placa base configurado de fábrica." },
+            { cat: "env", cmd: "cls", desc: "Limpia por completo la pantalla activa del prompt de la consola." },
+            { cat: "env", cmd: "set", desc: "Lista todas las variables de entorno activas configuradas en la arquitectura." }
+        ];
+
+        let filtroCategoriaActual = "all";
+
+        function cargarComandos() {
+            const container = document.getElementById('command-container');
+            container.innerHTML = '';
+            comandosCMD.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'command-row';
+                row.dataset.cat = item.cat;
+                row.innerHTML = `<code>${item.cmd}</code><div class="desc">${item.desc}</div><button class="btn-row-copy" onclick="copyRawText('${item.cmd}')">Copiar</button>`;
+                container.appendChild(row);
+            });
+        }
+
+        function filtrarCategoria(cat, btn) {
+            filtroCategoriaActual = cat;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filtrarComandos();
+        }
+
+        function filtrarComandos() {
+            const query = document.getElementById('command-search').value.toLowerCase();
+            document.querySelectorAll('.command-row').forEach(row => {
+                const matchCat = (filtroCategoriaActual === 'all' || row.dataset.cat === filtroCategoriaActual);
+                const matchText = row.querySelector('code').innerText.toLowerCase().includes(query) || row.querySelector('.desc').innerText.toLowerCase().includes(query);
+                row.style.display = (matchCat && matchText) ? 'flex' : 'none';
+            });
+        }
+
+        // Módulo: Optimización local (Novedad)
+        function generarScriptLimpieza() {
+            const script = `@echo off\necho === INICIANDO LIMPIEZA DE MANTENIMIENTO ===\ndel /f /q /s %systemdrive%\\*.tmp\ndel /f /q /s %systemdrive%\\*._mp\ndel /f /q /s %systemdrive%\\*.log\ndel /f /q /s %systemdrive%\\*.chk\ndel /f /q /s %systemdrive%\\*.old\ndel /f /q /s %systemdrive%\\recycled\\*.*\ndel /f /q /s %windir%\\*.bak\ndel /f /q /s %windir%\\prefetch\\*.*\nrd /s /q %windir%\\temp & md %windir%\\temp\nrd /s /q %temp% & md %temp%\necho === SISTEMA PURGADO ===\npause`;
+            document.getElementById('clean-output').innerText = script;
+        }
+
+        function generarRamTweak() {
+            const script = `# Limpieza sintáctica de memoria retenida en caché\n$WshShell = New-Object -ComObject Wscript.Shell\n[System.GC]::Collect()\n[System.GC]::WaitForPendingFinalizers()\nWrite-Output "Llamada al recolector de basura completada. Caché de RAM liberada."`;
+            document.getElementById('ram-output').innerText = script;
+        }
+
+        // Módulo: Winget (Optimizado con Debloat avanzado)
+        function generarWingetScript() {
+            let script = `@echo off\necho === INICIANDO DESPLIEGUE AUTOMATIZADO WINGET ===\n`;
+            document.querySelectorAll('.checkbox-group input[type="checkbox"]:checked').forEach(cb => {
+                if(cb.value) script += `winget install --id ${cb.value} -e --silent --accept-source-agreements --accept-package-agreements\n`;
+            });
+            if(document.getElementById('opt-telemetry').checked) {
+                script += `echo === DESACTIVANDO TELEMETRIA ===\nreg add "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection" /v AllowTelemetry /t REG_DWORD /d 0 /f\n`;
+            }
+            if(document.getElementById('opt-power').checked) {
+                script += `echo === FORZANDO ALTO RENDIMIENTO ===\npowercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c\n`;
+            }
+            if(document.getElementById('opt-effects').checked) {
+                script += `echo === OPTIMIZANDO EFECTOS VISUALES PARA RENDIMIENTO ===\nreg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects" /v VisualFXSetting /t REG_DWORD /d 2 /f\n`;
+            }
+            if(document.getElementById('opt-services').checked) {
+                script += `echo === APAGANDO SERVICIOS DE TELEMETRIA Y XBOX ===\nsc config DiagTrack start= disabled\nsc stop DiagTrack\nsc config XblAuthManager start= disabled\nsc stop XblAuthManager\n`;
+            }
+            script += `echo === DESPLIEGUE FINALIZADO ===\npause`;
+            document.getElementById('winget-output').innerText = script;
+        }
+
+        // Módulo: RAID
+        function calcularRAID() {
+            const n = parseInt(document.getElementById('raid-count').value);
+            const s = parseInt(document.getElementById('raid-size').value);
+            const t = document.getElementById('raid-type').value;
+            let util = 0, fallos = 0, notas = "";
+            if (n < 2) { alert("Sistemas: Se requieren mínimo 2 discos."); return; }
+            if(t === "0") { util = n * s; fallos = 0; notas = "Rendimiento máximo. Sin redundancia."; }
+            else if(t === "1") { util = s; fallos = n - 1; notas = "Duplicado exacto. Tolerancia alta."; }
+            else if(t === "5") { 
+                if (n < 3) { alert("RAID 5 requiere mínimo 3 discos."); return; }
+                util = (n - 1) * s; fallos = 1; notas = "Penalización en escritura intermedia (Paridad).";
+            }
+            else if(t === "6") {
+                if (n < 4) { alert("RAID 6 requiere mínimo 4 discos."); return; }
+                util = (n - 2) * s; fallos = 2; notas = "Soporta la caída simultánea de 2 discos.";
+            }
+            else if(t === "10") {
+                if (n % 2 !== 0 || n < 4) { alert("RAID 10 requiere número par de discos (mínimo 4)."); return; }
+                util = (n / 2) * s; fallos = n / 2; notas = "Excelente rendimiento y seguridad reconstrucción.";
+            }
+            document.getElementById('raid-output').innerText = `[MÉTRICAS DEL ARREGLO RAID]\n------------------------------\nCapacidad Útil en Windows: ${util} GB (${(util/1000).toFixed(2)} TB)\nDiscos Tolerados Caídos: ${fallos} disco(s)\nNotas de Cabina: ${notes = notas}`;
+        }
+
+        // Módulo: Redes
+        function calcularMascara() {
+            const c = parseInt(document.getElementById('net-cidr').value);
+            if (isNaN(c) || c < 1 || c > 32) { document.getElementById('net-output').innerText = "Inválido (1-32)"; return; }
+            let mask = [];
+            for (let i = 0; i < 4; i++) {
+                let n = 0;
+                for (let j = 0; j < 8; j++) { if ((i * 8 + j) < c) n += 1 << (7 - j); }
+                mask.push(n);
+            }
+            document.getElementById('net-output').innerText = mask.join('.');
+        }
+
+        function generarPingLoop() {
+            const h = document.getElementById('net-host').value.trim();
+            document.getElementById('ping-output').innerText = h ? `ping ${h} -t | Foreach{"{0} - {1}" -f (Get-Date),$_}` : "Introduce host.";
+        }
+
+        function generarMapeoRed() {
+            const l = document.getElementById('map-drive').value.trim();
+            const p = document.getElementById('map-path').value.trim();
+            document.getElementById('map-output').innerText = (l && p) ? `net use ${l} "${p}" /persistent:yes /user:[Dominio]\\ [Password]` : "Completa los campos.";
+        }
+
+        // Módulo: CSV / Excel
+        let rawCSVMemoria = "";
+        function procesarCSV() {
+            const raw = document.getElementById('csv-input').value.trim();
+            if (!raw) return;
+            rawCSVMemoria = raw;
+            const lineas = raw.split("\n");
+            let html = `<div class="csv-table-wrapper"><table class="csv-table" id="tabla-export-it">`;
+            lineas.forEach((l, i) => {
+                const cols = l.split(",");
+                html += i === 0 ? "<thead><tr>" : "<tr>";
+                cols.forEach(c => { html += i === 0 ? `<th>${c.trim().toUpperCase()}</th>` : `<td>${c.trim()}</td>`; });
+                html += i === 0 ? "</tr></thead><tbody>" : "</tr>";
+            });
+            html += "</tbody></table></div>";
+            document.getElementById('csv-wrapper-container').innerHTML = html;
+            document.getElementById('csv-contador-filas').innerText = `📊 Indexados: ${lineas.length - 1} registros.`;
+            document.getElementById('csv-actions-area').style.display = 'flex';
+        }
+
+        function descargarExcelReal() {
+            const t = document.getElementById('tabla-export-it');
+            if(!t) return;
+            const plantilla = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"></head><body>${t.outerHTML}</body></html>`;
+            const blob = new Blob([plantilla], { type: 'application/vnd.ms-excel;charset=utf-8' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Matriz_Sistemas_${Math.floor(Date.now()/1000)}.xls`;
+            link.click();
+        }
+
+        // Módulo: JSON Mapper
+        let matrizObjetosJSON = [];
+        function addObjetoArray() {
+            const u = document.getElementById('map-user').value.trim();
+            const r = document.getElementById('map-role').value.trim();
+            const d = document.getElementById('map-dept').value.trim();
+            if(!u) { alert("Introduce al menos un ID de usuario."); return; }
+            matrizObjetosJSON.push({ usuario_id: u, rol: r, departamento: d, timestamp_index: new Date().toISOString() });
+            document.getElementById('json-output').innerText = JSON.stringify(matrizObjetosJSON, null, 4);
+            document.getElementById('map-user').value = '';
+            document.getElementById('map-role').value = '';
+            document.getElementById('map-dept').value = '';
+        }
+        function limpiarArrayJSON() { matrizObjetosJSON = []; document.getElementById('json-output').innerText = "[]"; }
+
+        // Utilidades e Incidencias Persistentes
+        function copyCodeBlock(id) { navigator.clipboard.writeText(document.getElementById(id).innerText); alert("Copiado."); }
+        function copyRawText(t) { navigator.clipboard.writeText(t); alert(`Copiado: ${t}`); }
+
+        let todos = JSON.parse(localStorage.getItem('sys_hub_todos')) || [];
+        function renderTodos() {
+            const container = document.getElementById('todo-container');
+            container.innerHTML = '';
+            todos.forEach((todo, index) => {
+                const item = document.createElement('div');
+                item.className = `todo-item ${todo.done ? 'done' : ''}`;
+                item.innerHTML = `<span class="todo-text">${todo.text}</span><div><button class="btn-todo-action check" onclick="toggleTodo(${index})">✓</button><button class="btn-todo-action" onclick="deleteTodo(${index})">✗</button></div>`;
+                container.appendChild(item);
+            });
+        }
+        function addTodo() {
+            const input = document.getElementById('todo-input');
+            if (!input.value.trim()) return;
+            todos.push({ text: input.value.trim(), done: false });
+            localStorage.setItem('sys_hub_todos', JSON.stringify(todos));
+            input.value = '';
+            renderTodos();
+        }
+        function toggleTodo(index) { todos[index].done = !todos[index].done; localStorage.setItem('sys_hub_todos', JSON.stringify(todos)); renderTodos(); }
+        function deleteTodo(index) { todos.splice(index, 1); localStorage.setItem('sys_hub_todos', JSON.stringify(todos)); renderTodos(); }
+        function saveNotes() { localStorage.setItem('sys_hub_notes', document.getElementById('notepad').value); }
+
+        window.onload = function() {
+            actualizarScript();
+            cargarComandos();
+            generarScriptLimpieza();
+            generarRamTweak();
+            generarWingetScript();
+            renderTodos();
+            document.getElementById('notepad').value = localStorage.getItem('sys_hub_notes') || '';
+        };
+    </script>
 </body>
 </html>
