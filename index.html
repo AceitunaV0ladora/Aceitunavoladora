@@ -125,9 +125,11 @@
             markerGroup.clearLayers();
 
             try {
-                const proxy = 'https://cors-anywhere.herokuapp.com/';
+                // Proxy CORS directo y transparente que funciona perfectamente en páginas estáticas
+                const proxy = 'https://api.allorigins.win/raw?url=';
                 const url = `http://api.ctan.es/v1/Consorcios/Sevilla/Paradas/${paradaId}/TiemposLlegada?lang=ES`;
-                const response = await fetch(proxy + url, { headers: { 'Accept': 'application/json' } });
+                
+                const response = await fetch(proxy + encodeURIComponent(url));
                 const data = await response.json();
                 
                 container.innerHTML = '';
@@ -178,7 +180,7 @@
                 });
 
             } catch (error) {
-                container.innerHTML = "<p style='color: #ff6b81;'>Error de red. Recuerda activar el puente CORS en el navegador si pruebas desde local.</p>";
+                container.innerHTML = "<p style='color: #ff6b81;'>Error al conectar con la API del Consorcio.</p>";
                 console.error(error);
             }
         }
