@@ -125,9 +125,9 @@
             markerGroup.clearLayers();
 
             try {
-                // Proxy CORS directo y transparente que funciona perfectamente en páginas estáticas
-                const proxy = 'https://api.allorigins.win/raw?url=';
-                const url = `http://api.ctan.es/v1/Consorcios/Sevilla/Paradas/${paradaId}/TiemposLlegada?lang=ES`;
+                // Forzamos HTTPS en la URL del Consorcio y usamos un proxy compatible con entornos seguros HTTPS
+                const proxy = 'https://corsproxy.io/?';
+                const url = `https://api.ctan.es/v1/Consorcios/Sevilla/Paradas/${paradaId}/TiemposLlegada?lang=ES`;
                 
                 const response = await fetch(proxy + encodeURIComponent(url));
                 const data = await response.json();
