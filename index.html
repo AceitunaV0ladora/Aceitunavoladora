@@ -1,1416 +1,189 @@
 <!DOCTYPE html>
-<html lang="es"><head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FIFA World Cup 2026 - Live API Hub</title>
+<html lang='es'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>TusBus Sevilla - Pro</title>
+    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />
     <style>
-        :root {
-            --fifa-purple: #10031a;
-            --fifa-lavender: #4a157d;
-            --fifa-green: #00df89;
-            --fifa-blue: #0052ff;
-            --bg-canvas: #f4f4f6;
-            --bg-bracket: #d5d1cb;
-            --text-main: #111;
-            --card-bg: #ffffff;
-            --border-light: #e1e4e8;
-        }
-
-        body {
-            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--bg-canvas);
-            color: var(--text-main);
-            margin: 0;
-            padding: 0;
-        }
-
-        .brand-header {
-            background: linear-gradient(135deg, var(--fifa-purple) 0%, var(--fifa-lavender) 100%);
-            color: white;
-            text-align: center;
-            padding: 25px 20px;
-            border-bottom: 5px solid var(--fifa-green);
-        }
-
-        .brand-header h1 { font-size: 2.5rem; margin: 0; font-weight: 900; text-transform: uppercase; }
-        .brand-header h1 span { color: var(--fifa-green); }
-        .brand-header p { margin: 5px 0 0; color: #cbd5e1; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; }
-
-        .nav-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1400px;
-            margin: 20px auto;
-            padding: 0 25px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .tabs .tab-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-        .tabs .tab-btn.active { background: var(--fifa-purple); color: white; }
-
-        .action-btns { display: flex; gap: 10px; align-items: center; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { display: flex; height: 100vh; background-color: #0a0a0c; color: #f3f4f6; overflow: hidden; }
         
-        .btn { font-weight: bold; text-transform: uppercase; border: none; padding: 10px 22px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; }
-        .btn-auto { background: var(--fifa-green); color: var(--fifa-purple); }
-        .btn-clear { background: #cbd5e1; color: #334155; }
-
-        .container { max-width: 1500px; margin: 0 auto; padding: 0 25px 40px 25px; }
-        .page-section { display: none; }
-        .page-section.active { display: block; }
-
-        /* Grid Grupos */
-        .grid-grupos { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px; }
-        .grupo-card { background: var(--card-bg); border-radius: 12px; padding: 15px; border: 1px solid var(--border-light); margin-bottom: 15px; }
-        .grupo-header { font-size: 1.2rem; font-weight: 800; color: white; background: var(--fifa-lavender); margin: -15px -15px 15px -15px; padding: 10px 15px; border-top-left-radius: 11px; border-top-right-radius: 11px; }
+        #sidebar { width: 380px; padding: 24px; display: flex; flex-direction: column; gap: 24px; background: rgba(18, 18, 24, 0.85); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.08); z-index: 1000; box-shadow: 4px 0 24px rgba(0,0,0,0.3); }
+        .brand { display: flex; align-items: center; gap: 10px; font-size: 1.4rem; font-weight: 800; color: #ff4757; letter-spacing: -0.5px; }
         
-        .partido-row { display: flex; align-items: center; justify-content: space-between; background: #f8f9fa; padding: 6px 10px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #edf0f2; }
-        .team-block { display: flex; align-items: center; width: 42%; font-size: 0.85rem; font-weight: 600; }
-        .team-block.der { justify-content: flex-end; text-align: right; }
-        .flag { font-size: 1.1rem; margin: 0 6px; }
-
-        input[type="number"] { width: 30px; text-align: center; font-weight: bold; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 0; font-size: 0.85rem; }
-
-        .tabla-posiciones { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.82rem; }
-        .tabla-posiciones th { color: #64748b; text-align: left; padding-bottom: 4px; border-bottom: 1px solid var(--border-light); }
-        .tabla-posiciones td { padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
-        .row-c1 { color: var(--fifa-blue); font-weight: bold; }
-        .row-c2 { color: #00995c; font-weight: bold; }
-        .row-c3 { color: #cc7a00; font-weight: bold; }
-
-        /* Bracket */
-        .bracket-container { background-color: var(--bg-bracket); border-radius: 16px; padding: 20px; overflow-x: auto; }
-        .bracket-wrapper { display: flex; gap: 15px; min-width: 1300px; justify-content: space-between; }
-        .bracket-column { flex: 1; display: flex; flex-direction: column; justify-content: space-around; min-height: 850px; }
-        .bracket-column h4 { text-align: center; background: var(--fifa-purple); color: white; margin: 0 0 10px 0; padding: 6px; border-radius: 6px; font-size: 0.8rem; text-transform: uppercase; }
-
-        .match-box { background: white; border-radius: 8px; padding: 8px; margin: 5px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 4px solid var(--fifa-blue); width: 100%; box-sizing: border-box; }
-        .match-box-title { font-size: 0.7rem; color: #64748b; margin-bottom: 4px; font-weight: bold; border-bottom: 1px solid #f1f5f9; }
-        .match-team-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 0.8rem; font-weight: 500; }
+        .search-group { display: flex; flex-direction: column; gap: 8px; }
+        .search-box { display: flex; gap: 8px; }
+        input { flex: 1; padding: 12px 16px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #fff; border-radius: 10px; font-size: 1rem; transition: all 0.3s; }
+        input:focus { outline: none; border-color: #ff4757; background: rgba(255,255,255,0.08); box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2); }
         
-        #campeon-banner { background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%); color: var(--fifa-purple); text-align: center; font-size: 1.5rem; font-weight: 900; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: none; text-transform: uppercase; }
+        .btn { padding: 12px 16px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .btn-primary { background: #ff4757; color: white; }
+        .btn-primary:hover { background: #ff6b81; transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+        
+        .section-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #8a8a93; letter-spacing: 1px; margin-bottom: 8px; }
+        #favorites-list { display: flex; flex-wrap: wrap; gap: 8px; max-height: 100px; overflow-y: auto; }
+        .fav-badge { background: rgba(255, 71, 87, 0.1); border: 1px solid rgba(255, 71, 87, 0.2); color: #ff4757; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .fav-badge:hover { background: #ff4757; color: white; }
+        
+        #results-container { flex: 1; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; padding-right: 4px; }
+        #results-container::-webkit-scrollbar { width: 6px; }
+        #results-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        
+        .bus-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s, background 0.2s; animation: fadeIn 0.3s ease-out; }
+        .bus-card:hover { background: rgba(255,255,255,0.05); }
+        .bus-info { display: flex; flex-direction: column; gap: 4px; }
+        .bus-line { background: #ff4757; color: white; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 1.1rem; width: max-content; }
+        .bus-dest { font-size: 0.9rem; color: #a1a1aa; font-weight: 500; margin-top: 4px; }
+        .bus-time { font-size: 1.3rem; color: #2ed573; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        
+        #map { flex: 1; height: 100%; background: #0d0d11; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div class="brand-header">
-    <h1>FIFA WORLD CUP <span>2026</span></h1>
-    <p>Simulador Oficial - Conexión API Automática</p>
-</div>
-
-<div class="nav-controls">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('fase-grupos-sec')">Fase de Grupos</button>
-        <button class="tab-btn" onclick="switchTab('fase-final-sec')">Fase Final (Árbol)</button>
-    </div>
-    <div class="action-btns">
-        <button class="btn btn-auto" onclick="simularMundialAutomático()">⚡ Simular Resto</button>
-        <button class="btn btn-clear" onclick="limpiarTodoManual()">🗑️ Limpiar</button>
-    </div>
-</div>
-
-<div class="container">
-    <div id="campeon-banner" style="display: none;"></div>
-
-    <div id="fase-grupos-sec" class="page-section active">
-        <div class="grid-grupos" id="box-grupos">
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo A</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇲🇽</span><span>México</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="México" data-p2="Sudáfrica" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="México" data-p2="Sudáfrica" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Sudáfrica</span><span class="flag">🇿🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇲🇽</span><span>México</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="México" data-p2="Corea del Sur" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="México" data-p2="Corea del Sur" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Corea del Sur</span><span class="flag">🇰🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇲🇽</span><span>México</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="México" data-p2="Chequia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="México" data-p2="Chequia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Chequia</span><span class="flag">🇨🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇿🇦</span><span>Sudáfrica</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="Sudáfrica" data-p2="Corea del Sur" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="Sudáfrica" data-p2="Corea del Sur" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Corea del Sur</span><span class="flag">🇰🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇿🇦</span><span>Sudáfrica</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="Sudáfrica" data-p2="Chequia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="Sudáfrica" data-p2="Chequia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Chequia</span><span class="flag">🇨🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇰🇷</span><span>Corea del Sur</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo A" data-p1="Corea del Sur" data-p2="Chequia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo A" data-p1="Corea del Sur" data-p2="Chequia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Chequia</span><span class="flag">🇨🇿</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoA">
-            <tr class="row-c1">
-                <td>🇲🇽 México</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇿🇦 Sudáfrica</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇰🇷 Corea del Sur</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇨🇿 Chequia</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo B</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇦</span><span>Canadá</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Canadá" data-p2="Suiza" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Canadá" data-p2="Suiza" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Suiza</span><span class="flag">🇨🇭</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇦</span><span>Canadá</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Canadá" data-p2="Qatar" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Canadá" data-p2="Qatar" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Qatar</span><span class="flag">🇶🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇦</span><span>Canadá</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Canadá" data-p2="Bosnia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Canadá" data-p2="Bosnia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Bosnia</span><span class="flag">🇧🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇭</span><span>Suiza</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Suiza" data-p2="Qatar" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Suiza" data-p2="Qatar" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Qatar</span><span class="flag">🇶🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇭</span><span>Suiza</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Suiza" data-p2="Bosnia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Suiza" data-p2="Bosnia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Bosnia</span><span class="flag">🇧🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇶🇦</span><span>Qatar</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo B" data-p1="Qatar" data-p2="Bosnia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo B" data-p1="Qatar" data-p2="Bosnia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Bosnia</span><span class="flag">🇧🇦</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoB">
-            <tr class="row-c1">
-                <td>🇨🇦 Canadá</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇨🇭 Suiza</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇶🇦 Qatar</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇧🇦 Bosnia</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo C</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇷</span><span>Brasil</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Brasil" data-p2="Marruecos" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Brasil" data-p2="Marruecos" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Marruecos</span><span class="flag">🇲🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇷</span><span>Brasil</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Brasil" data-p2="Haití" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Brasil" data-p2="Haití" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Haití</span><span class="flag">🇭🇹</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇷</span><span>Brasil</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Brasil" data-p2="Escocia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Brasil" data-p2="Escocia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Escocia</span><span class="flag">🏴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇲🇦</span><span>Marruecos</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Marruecos" data-p2="Haití" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Marruecos" data-p2="Haití" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Haití</span><span class="flag">🇭🇹</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇲🇦</span><span>Marruecos</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Marruecos" data-p2="Escocia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Marruecos" data-p2="Escocia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Escocia</span><span class="flag">🏴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇭🇹</span><span>Haití</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo C" data-p1="Haití" data-p2="Escocia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo C" data-p1="Haití" data-p2="Escocia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Escocia</span><span class="flag">🏴</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoC">
-            <tr class="row-c1">
-                <td>🇧🇷 Brasil</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇲🇦 Marruecos</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇭🇹 Haití</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🏴 Escocia</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo D</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇺🇸</span><span>EE.UU.</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Paraguay" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Paraguay" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Paraguay</span><span class="flag">🇵🇾</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇺🇸</span><span>EE.UU.</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Australia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Australia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Australia</span><span class="flag">🇦🇺</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇺🇸</span><span>EE.UU.</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Turquía" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="EE.UU." data-p2="Turquía" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Turquía</span><span class="flag">🇹🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇵🇾</span><span>Paraguay</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="Paraguay" data-p2="Australia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="Paraguay" data-p2="Australia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Australia</span><span class="flag">🇦🇺</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇵🇾</span><span>Paraguay</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="Paraguay" data-p2="Turquía" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="Paraguay" data-p2="Turquía" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Turquía</span><span class="flag">🇹🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇦🇺</span><span>Australia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo D" data-p1="Australia" data-p2="Turquía" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo D" data-p1="Australia" data-p2="Turquía" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Turquía</span><span class="flag">🇹🇷</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoD">
-            <tr class="row-c1">
-                <td>🇺🇸 EE.UU.</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇵🇾 Paraguay</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇦🇺 Australia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇹🇷 Turquía</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo E</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇩🇪</span><span>Alemania</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Alemania" data-p2="Curazao" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Alemania" data-p2="Curazao" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Curazao</span><span class="flag">🇨🇼</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇩🇪</span><span>Alemania</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Alemania" data-p2="Costa de Marfil" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Alemania" data-p2="Costa de Marfil" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Costa de Marfil</span><span class="flag">🇨🇮</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇩🇪</span><span>Alemania</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Alemania" data-p2="Ecuador" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Alemania" data-p2="Ecuador" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Ecuador</span><span class="flag">🇪🇨</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇼</span><span>Curazao</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Curazao" data-p2="Costa de Marfil" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Curazao" data-p2="Costa de Marfil" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Costa de Marfil</span><span class="flag">🇨🇮</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇼</span><span>Curazao</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Curazao" data-p2="Ecuador" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Curazao" data-p2="Ecuador" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Ecuador</span><span class="flag">🇪🇨</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇮</span><span>Costa de Marfil</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo E" data-p1="Costa de Marfil" data-p2="Ecuador" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo E" data-p1="Costa de Marfil" data-p2="Ecuador" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Ecuador</span><span class="flag">🇪🇨</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoE">
-            <tr class="row-c1">
-                <td>🇩🇪 Alemania</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇨🇼 Curazao</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇨🇮 Costa de Marfil</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇪🇨 Ecuador</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo F</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇳🇱</span><span>Países Bajos</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Japón" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Japón" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Japón</span><span class="flag">🇯🇵</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇳🇱</span><span>Países Bajos</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Suecia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Suecia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Suecia</span><span class="flag">🇸🇪</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇳🇱</span><span>Países Bajos</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Túnez" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Países Bajos" data-p2="Túnez" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Túnez</span><span class="flag">🇹🇳</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇯🇵</span><span>Japón</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Japón" data-p2="Suecia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Japón" data-p2="Suecia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Suecia</span><span class="flag">🇸🇪</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇯🇵</span><span>Japón</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Japón" data-p2="Túnez" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Japón" data-p2="Túnez" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Túnez</span><span class="flag">🇹🇳</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇸🇪</span><span>Suecia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo F" data-p1="Suecia" data-p2="Túnez" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo F" data-p1="Suecia" data-p2="Túnez" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Túnez</span><span class="flag">🇹🇳</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoF">
-            <tr class="row-c1">
-                <td>🇳🇱 Países Bajos</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇯🇵 Japón</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇸🇪 Suecia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇹🇳 Túnez</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo G</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇪</span><span>Bélgica</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Egipto" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Egipto" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Egipto</span><span class="flag">🇪🇬</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇪</span><span>Bélgica</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Irán" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Irán" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Irán</span><span class="flag">🇮🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇧🇪</span><span>Bélgica</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Bélgica" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Nueva Zelanda</span><span class="flag">🇳🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇪🇬</span><span>Egipto</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Egipto" data-p2="Irán" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Egipto" data-p2="Irán" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Irán</span><span class="flag">🇮🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇪🇬</span><span>Egipto</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Egipto" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Egipto" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Nueva Zelanda</span><span class="flag">🇳🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇮🇷</span><span>Irán</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo G" data-p1="Irán" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo G" data-p1="Irán" data-p2="Nueva Zelanda" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Nueva Zelanda</span><span class="flag">🇳🇿</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoG">
-            <tr class="row-c1">
-                <td>🇧🇪 Bélgica</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇪🇬 Egipto</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇮🇷 Irán</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇳🇿 Nueva Zelanda</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo H</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇪🇸</span><span>España</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="España" data-p2="Cabo Verde" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="España" data-p2="Cabo Verde" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Cabo Verde</span><span class="flag">🇨🇻</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇪🇸</span><span>España</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="España" data-p2="Arabia Saudí" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="España" data-p2="Arabia Saudí" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Arabia Saudí</span><span class="flag">🇸🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇪🇸</span><span>España</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="España" data-p2="Uruguay" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="España" data-p2="Uruguay" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Uruguay</span><span class="flag">🇺🇾</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇻</span><span>Cabo Verde</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="Cabo Verde" data-p2="Arabia Saudí" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="Cabo Verde" data-p2="Arabia Saudí" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Arabia Saudí</span><span class="flag">🇸🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇻</span><span>Cabo Verde</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="Cabo Verde" data-p2="Uruguay" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="Cabo Verde" data-p2="Uruguay" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Uruguay</span><span class="flag">🇺🇾</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇸🇦</span><span>Arabia Saudí</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo H" data-p1="Arabia Saudí" data-p2="Uruguay" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo H" data-p1="Arabia Saudí" data-p2="Uruguay" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Uruguay</span><span class="flag">🇺🇾</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoH">
-            <tr class="row-c1">
-                <td>🇪🇸 España</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇨🇻 Cabo Verde</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇸🇦 Arabia Saudí</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇺🇾 Uruguay</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo I</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇫🇷</span><span>Francia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Francia" data-p2="Senegal" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Francia" data-p2="Senegal" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Senegal</span><span class="flag">🇸🇳</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇫🇷</span><span>Francia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Francia" data-p2="Noruega" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Francia" data-p2="Noruega" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Noruega</span><span class="flag">🇳🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇫🇷</span><span>Francia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Francia" data-p2="Irak" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Francia" data-p2="Irak" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Irak</span><span class="flag">🇮🇶</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇸🇳</span><span>Senegal</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Senegal" data-p2="Noruega" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Senegal" data-p2="Noruega" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Noruega</span><span class="flag">🇳🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇸🇳</span><span>Senegal</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Senegal" data-p2="Irak" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Senegal" data-p2="Irak" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Irak</span><span class="flag">🇮🇶</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇳🇴</span><span>Noruega</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo I" data-p1="Noruega" data-p2="Irak" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo I" data-p1="Noruega" data-p2="Irak" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Irak</span><span class="flag">🇮🇶</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoI">
-            <tr class="row-c1">
-                <td>🇫🇷 Francia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇸🇳 Senegal</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇳🇴 Noruega</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇮🇶 Irak</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo J</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇦🇷</span><span>Argentina</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Argentina" data-p2="Argelia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Argentina" data-p2="Argelia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Argelia</span><span class="flag">🇩🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇦🇷</span><span>Argentina</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Argentina" data-p2="Austria" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Argentina" data-p2="Austria" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Austria</span><span class="flag">🇦🇹</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇦🇷</span><span>Argentina</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Argentina" data-p2="Jordania" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Argentina" data-p2="Jordania" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Jordania</span><span class="flag">🇯🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇩🇿</span><span>Argelia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Argelia" data-p2="Austria" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Argelia" data-p2="Austria" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Austria</span><span class="flag">🇦🇹</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇩🇿</span><span>Argelia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Argelia" data-p2="Jordania" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Argelia" data-p2="Jordania" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Jordania</span><span class="flag">🇯🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇦🇹</span><span>Austria</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo J" data-p1="Austria" data-p2="Jordania" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo J" data-p1="Austria" data-p2="Jordania" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Jordania</span><span class="flag">🇯🇴</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoJ">
-            <tr class="row-c1">
-                <td>🇦🇷 Argentina</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇩🇿 Argelia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇦🇹 Austria</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇯🇴 Jordania</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo K</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇵🇹</span><span>Portugal</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Portugal" data-p2="Uzbekistán" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Portugal" data-p2="Uzbekistán" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Uzbekistán</span><span class="flag">🇺🇿</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇵🇹</span><span>Portugal</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Portugal" data-p2="Colombia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Portugal" data-p2="Colombia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Colombia</span><span class="flag">🇨🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇵🇹</span><span>Portugal</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Portugal" data-p2="RD Congo" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Portugal" data-p2="RD Congo" oninput="calcularMundial()">
-                    <div class="team-block der"><span>RD Congo</span><span class="flag">🇨🇩</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇺🇿</span><span>Uzbekistán</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Uzbekistán" data-p2="Colombia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Uzbekistán" data-p2="Colombia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Colombia</span><span class="flag">🇨🇴</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇺🇿</span><span>Uzbekistán</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Uzbekistán" data-p2="RD Congo" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Uzbekistán" data-p2="RD Congo" oninput="calcularMundial()">
-                    <div class="team-block der"><span>RD Congo</span><span class="flag">🇨🇩</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇨🇴</span><span>Colombia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo K" data-p1="Colombia" data-p2="RD Congo" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo K" data-p1="Colombia" data-p2="RD Congo" oninput="calcularMundial()">
-                    <div class="team-block der"><span>RD Congo</span><span class="flag">🇨🇩</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoK">
-            <tr class="row-c1">
-                <td>🇵🇹 Portugal</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇺🇿 Uzbekistán</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇨🇴 Colombia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇨🇩 RD Congo</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div>
-            <div class="grupo-card">
-                <div class="grupo-header">Grupo L</div>
-                <div class="partidos-list">
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🏴</span><span>Inglaterra</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Croacia" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Croacia" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Croacia</span><span class="flag">🇭🇷</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🏴</span><span>Inglaterra</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Ghana" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Ghana" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Ghana</span><span class="flag">🇬🇭</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🏴</span><span>Inglaterra</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Panamá" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Inglaterra" data-p2="Panamá" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Panamá</span><span class="flag">🇵🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇭🇷</span><span>Croacia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Croacia" data-p2="Ghana" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Croacia" data-p2="Ghana" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Ghana</span><span class="flag">🇬🇭</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇭🇷</span><span>Croacia</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Croacia" data-p2="Panamá" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Croacia" data-p2="Panamá" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Panamá</span><span class="flag">🇵🇦</span></div>
-                </div>
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">🇬🇭</span><span>Ghana</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="Grupo L" data-p1="Ghana" data-p2="Panamá" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="Grupo L" data-p1="Ghana" data-p2="Panamá" oninput="calcularMundial()">
-                    <div class="team-block der"><span>Panamá</span><span class="flag">🇵🇦</span></div>
-                </div></div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-GrupoL">
-            <tr class="row-c1">
-                <td>🏴 Inglaterra</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c2">
-                <td>🇭🇷 Croacia</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="row-c3">
-                <td>🇬🇭 Ghana</td><td>0</td><td>0</td>
-            </tr>
-            <tr class="">
-                <td>🇵🇦 Panamá</td><td>0</td><td>0</td>
-            </tr></tbody>
-                </table>
-            </div></div>
-    </div>
-
-    <div id="fase-final-sec" class="page-section">
-        <div class="bracket-container">
-            <div class="bracket-wrapper">
-                <div class="bracket-column" id="col-32"><h4>1/16 de Final</h4><div class="col-content" style="height:100%; display:flex; flex-direction:column; justify-content:space-around;">
-        <div class="match-box">
-            <div class="match-box-title">1E vs 3ABCDF</div>
-            <div class="match-team-row">
-                <span>🇩🇪 Alemania</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 0, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇰🇷 Corea del Sur</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 0, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1I vs 3CDFGH</div>
-            <div class="match-team-row">
-                <span>🇫🇷 Francia</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 1, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇭🇹 Haití</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 1, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">2A vs 2B</div>
-            <div class="match-team-row">
-                <span>🇿🇦 Sudáfrica</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 2, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇨🇭 Suiza</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 2, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1F vs 2C</div>
-            <div class="match-team-row">
-                <span>🇳🇱 Países Bajos</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 3, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇲🇦 Marruecos</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 3, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">2K vs 2L</div>
-            <div class="match-team-row">
-                <span>🇺🇿 Uzbekistán</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 4, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇭🇷 Croacia</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 4, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1H vs 2J</div>
-            <div class="match-team-row">
-                <span>🇪🇸 España</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 5, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇩🇿 Argelia</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 5, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1D vs 3BEFIJ</div>
-            <div class="match-team-row">
-                <span>🇺🇸 EE.UU.</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 6, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇶🇦 Qatar</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 6, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1G vs 3AEHIJ</div>
-            <div class="match-team-row">
-                <span>🇧🇪 Bélgica</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 7, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇰🇷 Corea del Sur</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 7, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1C vs 2F</div>
-            <div class="match-team-row">
-                <span>🇧🇷 Brasil</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 8, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇯🇵 Japón</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 8, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">2E vs 2I</div>
-            <div class="match-team-row">
-                <span>🇨🇼 Curazao</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 9, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇸🇳 Senegal</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 9, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1A vs 3CEFHI</div>
-            <div class="match-team-row">
-                <span>🇲🇽 México</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 10, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇭🇹 Haití</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 10, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1L vs 3EHIJK</div>
-            <div class="match-team-row">
-                <span>🏴 Inglaterra</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 11, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇨🇮 Costa de Marfil</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 11, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1J vs 2H</div>
-            <div class="match-team-row">
-                <span>🇦🇷 Argentina</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 12, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇨🇻 Cabo Verde</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 12, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">2D vs 2G</div>
-            <div class="match-team-row">
-                <span>🇵🇾 Paraguay</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 13, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇪🇬 Egipto</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 13, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1B vs 3EFGHI</div>
-            <div class="match-team-row">
-                <span>🇨🇦 Canadá</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 14, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇨🇮 Costa de Marfil</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 14, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">1K vs 3DEIJL</div>
-            <div class="match-team-row">
-                <span>🇵🇹 Portugal</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 15, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🇦🇺 Australia</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r32', 15, 2, this.value)">
-            </div>
-        </div></div></div>
-                <div class="bracket-column" id="col-16"><h4>Octavos</h4><div class="col-content" style="height:100%; display:flex; flex-direction:column; justify-content:space-around;">
-        <div class="match-box">
-            <div class="match-box-title">Octavos 1</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P1</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 0, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P2</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 0, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 2</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P3</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 1, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P4</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 1, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 3</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P5</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 2, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P6</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 2, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 4</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P7</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 3, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P8</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 3, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 5</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P9</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 4, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P10</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 4, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 6</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P11</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 5, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P12</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 5, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 7</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P13</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 6, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P14</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 6, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Octavos 8</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P15</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 7, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador P16</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r16', 7, 2, this.value)">
-            </div>
-        </div></div></div>
-                <div class="bracket-column" id="col-8"><h4>Cuartos</h4><div class="col-content" style="height:100%; display:flex; flex-direction:column; justify-content:space-around;">
-        <div class="match-box">
-            <div class="match-box-title">Cuartos 1</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O1</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 0, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O2</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 0, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Cuartos 2</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O3</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 1, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O4</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 1, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Cuartos 3</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O5</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 2, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O6</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 2, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Cuartos 4</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O7</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 3, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador O8</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r8', 3, 2, this.value)">
-            </div>
-        </div></div></div>
-                <div class="bracket-column" id="col-4"><h4>Semifinal</h4><div class="col-content" style="height:100%; display:flex; flex-direction:column; justify-content:space-around;">
-        <div class="match-box">
-            <div class="match-box-title">Semis 1</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador C1</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r4', 0, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador C2</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r4', 0, 2, this.value)">
-            </div>
-        </div>
-        <div class="match-box">
-            <div class="match-box-title">Semis 2</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador C3</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r4', 1, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador C4</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r4', 1, 2, this.value)">
-            </div>
-        </div></div></div>
-                <div class="bracket-column" id="col-2"><h4>Final</h4><div class="col-content" style="height:100%; display:flex; flex-direction:column; justify-content:space-around;">
-        <div class="match-box">
-            <div class="match-box-title">Final 1</div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador S1</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r2', 0, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>🏳️ Ganador S2</span>
-                <input type="number" min="0" value="" oninput="capturarGolPlayoff('r2', 0, 2, this.value)">
-            </div>
-        </div></div></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-// Tu clave API fija para que nunca tengas que volver a ponerla
-const API_TOKEN = "55daaa3790a04a36a04aeae33cb49bbf";
-
-const estructuraMundial = {
-    "Grupo A": [{n:"México", f:"🇲🇽"}, {n:"Sudáfrica", f:"🇿🇦"}, {n:"Corea del Sur", f:"🇰🇷"}, {n:"Chequia", f:"🇨🇿"}],
-    "Grupo B": [{n:"Canadá", f:"🇨🇦"}, {n:"Suiza", f:"🇨🇭"}, {n:"Qatar", f:"🇶🇦"}, {n:"Bosnia", f:"🇧🇦"}],
-    "Grupo C": [{n:"Brasil", f:"🇧🇷"}, {n:"Marruecos", f:"🇲🇦"}, {n:"Haití", f:"🇭🇹"}, {n:"Escocia", f:"🏴" }],
-    "Grupo D": [{n:"EE.UU.", f:"🇺🇸"}, {n:"Paraguay", f:"🇵🇾"}, {n:"Australia", f:"🇦🇺"}, {n:"Turquía", f:"🇹🇷"}],
-    "Grupo E": [{n:"Alemania", f:"🇩🇪"}, {n:"Curazao", f:"🇨🇼"}, {n:"Costa de Marfil", f:"🇨🇮"}, {n:"Ecuador", f:"🇪🇨"}],
-    "Grupo F": [{n:"Países Bajos", f:"🇳🇱"}, {n:"Japón", f:"🇯🇵"}, {n:"Suecia", f:"🇸🇪"}, {n:"Túnez", f:"🇹🇳"}],
-    "Grupo G": [{n:"Bélgica", f:"🇧🇪"}, {n:"Egipto", f:"🇪🇬"}, {n:"Irán", f:"🇮🇷"}, {n:"Nueva Zelanda", f:"🇳🇿"}],
-    "Grupo H": [{n:"España", f:"🇪🇸"}, {n:"Cabo Verde", f:"🇨🇻"}, {n:"Arabia Saudí", f:"🇸🇦"}, {n:"Uruguay", f:"🇺🇾"}],
-    "Grupo I": [{n:"Francia", f:"🇫🇷"}, {n:"Senegal", f:"🇸🇳"}, {n:"Noruega", f:"🇳🇴"}, {n:"Irak", f:"🇮🇶"}],
-    "Grupo J": [{n:"Argentina", f:"🇦🇷"}, {n:"Argelia", f:"🇩🇿"}, {n:"Austria", f:"🇦🇹"}, {n:"Jordania", f:"🇯🇴"}],
-    "Grupo K": [{n:"Portugal", f:"🇵🇹"}, {n:"Uzbekistán", f:"🇺🇿"}, {n:"Colombia", f:"🇨🇴"}, {n:"RD Congo", f:"🇨🇩"}],
-    "Grupo L": [{n:"Inglaterra", f:"🏴"}, {n:"Croacia", f:"🇭🇷"}, {n:"Ghana", f:"🇬🇭"}, {n:"Panamá", f:"🇵🇦"}]
-};
-
-const traductorPaises = {
-    "Mexico": "México", "South Africa": "Sudáfrica", "South Korea": "Corea del Sur", "Czech Republic": "Chequia",
-    "Canada": "Canadá", "Switzerland": "Suiza", "Qatar": "Qatar", "Bosnia and Herzegovina": "Bosnia",
-    "Brazil": "Brasil", "Morocco": "Marruecos", "Haiti": "Haití", "Scotland": "Escocia",
-    "USA": "EE.UU.", "Paraguay": "Paraguay", "Australia": "Australia", "Turkey": "Turquía",
-    "Germany": "Alemania", "Curaçao": "Curazao", "Ivory Coast": "Costa de Marfil", "Ecuador": "Ecuador",
-    "Netherlands": "Países Bajos", "Japan": "Japón", "Sweden": "Suecia", "Tunisia": "Túnez",
-    "Belgium": "Bélgica", "Egypt": "Egipto", "Iran": "Irán", "New Zealand": "Nueva Zelanda",
-    "Spain": "España", "Cape Verde": "Cabo Verde", "Saudi Arabia": "Arabia Saudí", "Uruguay": "Uruguay",
-    "France": "Francia", "Senegal": "Senegal", "Norway": "Noruega", "Iraq": "Irak",
-    "Argentina": "Argentina", "Algeria": "Argelia", "Austria": "Austria", "Jordan": "Jordania",
-    "Portugal": "Portugal", "Uzbekistan": "Uzbekistán", "Colombia": "Colombia", "Democratic Republic of the Congo": "RD Congo",
-    "England": "Inglaterra", "Croatia": "Croacia", "Ghana": "Ghana", "Panama": "Panamá"
-};
-
-const formulaCruces = [
-    { id: "P1", t: "1E vs 3ABCDF", e1: "1E", e2: "3ABCDF" }, { id: "P2", t: "1I vs 3CDFGH", e1: "1I", e2: "3CDFGH" },
-    { id: "P3", t: "2A vs 2B", e1: "2A", e2: "2B" },         { id: "P4", t: "1F vs 2C", e1: "1F", e2: "2C" },
-    { id: "P5", t: "2K vs 2L", e1: "2K", e2: "2L" },         { id: "P6", t: "1H vs 2J", e1: "1H", e2: "2J" },
-    { id: "P7", t: "1D vs 3BEFIJ", e1: "1D", e2: "3BEFIJ" }, { id: "P8", t: "1G vs 3AEHIJ", e1: "1G", e2: "3AEHIJ" },
-    { id: "P9", t: "1C vs 2F", e1: "1C", e2: "2F" },         { id: "P10", t: "2E vs 2I", e1: "2E", e2: "2I" },
-    { id: "P11", t: "1A vs 3CEFHI", e1: "1A", e2: "3CEFHI" },{ id: "P12", t: "1L vs 3EHIJK", e1: "1L", e2: "3EHIJK" },
-    { id: "P13", t: "1J vs 2H", e1: "1J", e2: "2H" },        { id: "P14", t: "2D vs 2G", e1: "2D", e2: "2G" },
-    { id: "P15", t: "1B vs 3EFGHI", e1: "1B", e2: "3EFGHI" },{ id: "P16", t: "1K vs 3DEIJL", e1: "1K", e2: "3DEIJL" }
-];
-
-let datosFaseFinal = { r32: [], r16: [], r8: [], r4: [], r2: [] };
-
-function switchTab(sectionId) {
-    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(sectionId).classList.add('active');
-    event.currentTarget.classList.add('active');
-}
-
-function generarEstructuraHTML() {
-    const contenedor = document.getElementById("box-grupos");
-    contenedor.innerHTML = "";
-    for (const [letra, equipos] of Object.entries(estructuraMundial)) {
-        let rows = "";
-        for(let i=0; i<equipos.length; i++) {
-            for(let j=i+1; j<equipos.length; j++) {
-                rows += `
-                <div class="partido-row">
-                    <div class="team-block"><span class="flag">${equipos[i].f}</span><span>${equipos[i].n}</span></div>
-                    <input type="number" min="0" class="g1" data-grupo="${letra}" data-p1="${equipos[i].n}" data-p2="${equipos[j].n}" oninput="calcularMundial()">
-                    <input type="number" min="0" class="g2" data-grupo="${letra}" data-p1="${equipos[i].n}" data-p2="${equipos[j].n}" oninput="calcularMundial()">
-                    <div class="team-block der"><span>${equipos[j].n}</span><span class="flag">${equipos[j].f}</span></div>
-                </div>`;
-            }
-        }
-        contenedor.innerHTML += `
-            <div class="grupo-card">
-                <div class="grupo-header">${letra}</div>
-                <div class="partidos-list">${rows}</div>
-                <table class="tabla-posiciones">
-                    <thead><tr><th>Equipo</th><th>Pts</th><th>DG</th></tr></thead>
-                    <tbody id="body-${letra.replace(" ","")}"></tbody>
-                </table>
-            </div>`;
-    }
-}
-
-// EJECUCIÓN AUTOMÁTICA AL ABRIR LA WEB
-async function cargarResultadosDesdeAPI() {
-    try {
-        const respuesta = await fetch('https://api.football-data.org/v4/competitions/WC/matches', {
-            headers: { 'X-Auth-Token': API_TOKEN }
-        });
+    <div id='sidebar'>
+        <div class='brand'><span>🚌</span> TusBus Sevilla Pro</div>
         
-        if(!respuesta.ok) throw new Error("Token inválido o error de conexión.");
-        const datos = await respuesta.json();
+        <div class='search-group'>
+            <div class='search-box'>
+                <input type='text' id='paradaInput' value='137' placeholder='Ej. 137'>
+                <button class='btn btn-primary' onclick='buscarParada()'>Buscar</button>
+                <button class='btn btn-secondary' onclick='toggleFavorito()' title='Guardar en favoritos'>⭐</button>
+            </div>
+        </div>
 
-        datos.matches.forEach(match => {
-            if(match.score.fullTime.home !== null) {
-                let localEsp = traductorPaises[match.homeTeam.name] || match.homeTeam.name;
-                let visitanteEsp = traductorPaises[match.awayTeam.name] || match.awayTeam.name;
+        <div>
+            <div class='section-title'>Mis Paradas Guardadas</div>
+            <div id='favorites-list'></div>
+        </div>
 
-                let input1 = document.querySelector(`.g1[data-p1="${localEsp}"][data-p2="${visitanteEsp}"]`);
-                let input2 = document.querySelector(`.g2[data-p1="${localEsp}"][data-p2="${visitanteEsp}"]`);
+        <div style='display:flex; flex-direction:column; flex:1; min-height:0;'>
+            <div class='section-title' id='panel-title'>Tiempos de llegada</div>
+            <div id='results-container'>
+                <p style='color: #71717a; font-size: 0.95rem;'>Introduce una parada o pulsa una de tus guardadas para escanear en tiempo real.</p>
+            </div>
+        </div>
+    </div>
 
-                if(input1 && input2) {
-                    input1.value = match.score.fullTime.home;
-                    input2.value = match.score.fullTime.away;
+    <div id='map'></div>
+
+    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+    <script>
+        const map = L.map('map', { zoomControl: false }).setView([37.3891, -5.9845], 14);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        }).addTo(map);
+
+        let markerGroup = L.layerGroup().addTo(map);
+        let favoritos = JSON.parse(localStorage.getItem('tussam_favs')) || ['137'];
+
+        const rutaSimulada21 = [
+            { nombre: 'Recaredo', coords: [37.3898, -5.9822], minutosAprox: 6 },
+            { nombre: 'Menéndez Pelayo (Puerta Carmona)', coords: [37.3882, -5.9829], minutosAprox: 4 },
+            { nombre: 'Menéndez Pelayo (Juzgados)', coords: [37.3835, -5.9856], minutosAprox: 0 }
+        ];
+
+        function renderFavoritos() {
+            const container = document.getElementById('favorites-list');
+            container.innerHTML = favoritos.length === 0 ? "<p style='color:#52525b; font-size:0.85rem;'>No hay paradas guardadas</p>" : "";
+            favoritos.forEach(id => {
+                const badge = document.createElement('div');
+                badge.className = 'fav-badge';
+                badge.innerHTML = `📌 Parada ${id}`;
+                badge.onclick = () => {
+                    document.getElementById('paradaInput').value = id;
+                    buscarParada();
+                };
+                container.appendChild(badge);
+            });
+        }
+
+        function toggleFavorito() {
+            const id = document.getElementById('paradaInput').value.trim();
+            if (!id) return;
+            if (favoritos.includes(id)) {
+                favoritos = favoritos.filter(f => f !== id);
+            } else {
+                favoritos.push(id);
+            }
+            localStorage.setItem('tussam_favs', JSON.stringify(favoritos));
+            renderFavoritos();
+        }
+
+        async function buscarParada() {
+            const paradaId = document.getElementById('paradaInput').value.trim();
+            const container = document.getElementById('results-container');
+            if (!paradaId) return;
+            
+            container.innerHTML = "<p style='color:#a1a1aa; font-style:italic;'>Sincronizando con el Consorcio...</p>";
+            markerGroup.clearLayers();
+
+            try {
+                const proxy = 'https://cors-anywhere.herokuapp.com/';
+                const url = `http://api.ctan.es/v1/Consorcios/Sevilla/Paradas/${paradaId}/TiemposLlegada?lang=ES`;
+                const response = await fetch(proxy + url, { headers: { 'Accept': 'application/json' } });
+                const data = await response.json();
+                
+                container.innerHTML = '';
+                document.getElementById('panel-title').innerText = `Llegadas Parada ${paradaId}`;
+
+                if (!data.tiemposLlegada || data.tiemposLlegada.length === 0) {
+                    container.innerHTML = "<p style='color:#ff4757;'>Sin buses en los próximos minutos o parada inválida.</p>";
+                    return;
                 }
+
+                const miParadaCoords = [37.3835, -5.9856]; 
+                map.setView(miParadaCoords, 16);
+
+                L.circleMarker(miParadaCoords, {
+                    color: '#ff4757',
+                    fillColor: '#ff4757',
+                    radius: 7,
+                    fillOpacity: 1,
+                    weight: 3
+                }).addTo(markerGroup).bindPopup(`<b>📍 Parada ${paradaId}</b>`).openPopup();
+
+                data.tiemposLlegada.forEach(bus => {
+                    const card = document.createElement('div');
+                    card.className = 'bus-card';
+                    card.innerHTML = `
+                        <div class='bus-info'>
+                            <span class='bus-line'>${bus.linea}</span>
+                            <span class='bus-dest'>${bus.descripcion}</span>
+                        </div>
+                        <div class='bus-time'>${bus.tiempo}<span style='font-size:0.8rem; color:#71717a; margin-left:2px;'>min</span></div>
+                    `;
+                    container.appendChild(card);
+
+                    if (bus.linea === '21' || bus.linea === '01') {
+                        let paradaEstimada = rutaSimulada21[0];
+                        for (let p of rutaSimulada21) {
+                            if (bus.tiempo <= p.minutosAprox) { paradaEstimada = p; }
+                        }
+
+                        L.marker(paradaEstimada.coords, {
+                            icon: L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div style='background: #10b981; color: #000; padding: 6px 12px; border-radius: 30px; font-weight: 800; border: 2px solid #fff; font-size: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); white-space: nowrap;'>⚡ L-${bus.linea} (${bus.tiempo} min)</div>`,
+                                iconAnchor: [30, 20]
+                            })
+                        }).addTo(markerGroup).bindPopup(`<b>Estimación Óptica</b><br>Línea ${bus.linea}<br>Ubicación: En torno a ${paradaEstimada.nombre}`);
+                    }
+                });
+
+            } catch (error) {
+                container.innerHTML = "<p style='color: #ff6b81;'>Error de red. Recuerda activar el puente CORS en el navegador si pruebas desde local.</p>";
+                console.error(error);
             }
-        });
-
-        calcularMundial();
-    } catch (error) {
-        console.log("Aviso API: Cargando el simulador en modo manual/vacío. (" + error.message + ")");
-        calcularMundial();
-    }
-}
-
-function simularMundialAutomático() {
-    document.querySelectorAll('.g1, .g2').forEach(i => { if(i.value === "") i.value = Math.floor(Math.random() * 4); });
-    calcularMundial();
-
-    const keys = ["r32", "r16", "r8", "r4", "r2"];
-    keys.forEach(k => {
-        datosFaseFinal[k].forEach(p => {
-            if(p.g1 === "") p.g1 = Math.floor(Math.random() * 4);
-            if(p.g2 === "") p.g2 = Math.floor(Math.random() * 4);
-            while(p.g1 === p.g2) { p.g1 += 1; }
-        });
-        actualizarArbolVisual();
-    });
-}
-
-function limpiarTodoManual() {
-    document.querySelectorAll('input[type="number"]').forEach(i => i.value = "");
-    document.getElementById("campeon-banner").style.display = "none";
-    for(let k in datosFaseFinal) datosFaseFinal[k] = [];
-    calcularMundial();
-}
-
-function calcularMundial() {
-    let lideres = {}, segundos = {}, terceros = [];
-
-    for (const [letra, equipos] of Object.entries(estructuraMundial)) {
-        let mapeo = equipos.map(e => ({ n: e.n, f: e.f, pts: 0, gd: 0 }));
-        const inputs1 = document.querySelectorAll(`.g1[data-grupo="${letra}"]`);
-        const inputs2 = document.querySelectorAll(`.g2[data-grupo="${letra}"]`);
-
-        inputs1.forEach((in1, idx) => {
-            let v1 = in1.value, v2 = inputs2[idx].value;
-            if(v1 !== "" && v2 !== "") {
-                let g1 = parseInt(v1), g2 = parseInt(v2);
-                let t1 = in1.getAttribute("data-p1"), t2 = in1.getAttribute("data-p2");
-                let i1 = mapeo.findIndex(e => e.n === t1), i2 = mapeo.findIndex(e => e.n === t2);
-                if (g1 > g2) { mapeo[i1].pts += 3; } else if(g2 > g1) { mapeo[i2].pts += 3; } else { mapeo[i1].pts+=1; mapeo[i2].pts+=1; }
-                mapeo[i1].gd += (g1-g2); mapeo[i2].gd += (g2-g1);
-            }
-        });
-
-        mapeo.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
-        let letraCod = letra.split(" ")[1];
-        lideres[letraCod] = mapeo[0]; segundos[letraCod] = mapeo[1];
-        terceros.push({ ...mapeo[2], grupo: letraCod });
-
-        document.getElementById(`body-${letra.replace(" ","")}`).innerHTML = mapeo.map((e, idx) => `
-            <tr class="${idx==0?'row-c1':idx==1?'row-c2':idx==2?'row-c3':''}">
-                <td>${e.f} ${e.n}</td><td>${e.pts}</td><td>${e.gd}</td>
-            </tr>`).join('');
-    }
-
-    terceros.sort((a,b) => b.pts - a.pts || b.gd - a.gd);
-    let mejoresTerceros = terceros.slice(0, 8);
-
-    formulaCruces.forEach((cruce, index) => {
-        let e1 = obtenerEquipoFormula(cruce.e1, lideres, segundos, [...mejoresTerceros]);
-        let e2 = obtenerEquipoFormula(cruce.e2, lideres, segundos, [...mejoresTerceros]);
-        
-        if(!datosFaseFinal.r32[index]) {
-            datosFaseFinal.r32[index] = { id: cruce.id, label: cruce.t, t1: e1, t2: e2, g1: "", g2: "" };
-        } else {
-            datosFaseFinal.r32[index].t1 = e1; datosFaseFinal.r32[index].t2 = e2;
         }
-    });
 
-    actualizarArbolVisual();
-}
-
-function obtenerEquipoFormula(formula, l1, l2, m3) {
-    let tipo = formula[0]; let grupo = formula[1];
-    if (tipo === "1") return l1[grupo] || { n: `1º Gr. ${grupo}`, f:"🏳️" };
-    if (tipo === "2") return l2[grupo] || { n: `2º Gr. ${grupo}`, f:"🏳️" };
-    let targetGrupos = formula.substring(1).split("");
-    let encontrado = m3.find(t => targetGrupos.includes(t.grupo));
-    if (encontrado) { return encontrado; }
-    return { n: `3º Copa`, f: "🏳️" };
-}
-
-function actualizarArbolVisual() {
-    datosFaseFinal.r16 = encadenarRonda(datosFaseFinal.r32, 8, "Octavos");
-    datosFaseFinal.r8  = encadenarRonda(datosFaseFinal.r16, 4, "Cuartos");
-    datosFaseFinal.r4  = encadenarRonda(datosFaseFinal.r8,  2, "Semis");
-    datosFaseFinal.r2  = encadenarRonda(datosFaseFinal.r4,  1, "Final");
-
-    dibujarColumnaDOM("col-32", datosFaseFinal.r32, "r32");
-    dibujarColumnaDOM("col-16", datosFaseFinal.r16, "r16");
-    dibujarColumnaDOM("col-8",  datosFaseFinal.r8,  "r8");
-    dibujarColumnaDOM("col-4",  datosFaseFinal.r4,  "r4");
-    dibujarColumnaDOM("col-2",  datosFaseFinal.r2,  "r2");
-
-    const pFinal = datosFaseFinal.r2[0];
-    if (pFinal && pFinal.g1 !== "" && pFinal.g2 !== "" && pFinal.g1 !== pFinal.g2) {
-        let ganador = parseInt(pFinal.g1) > parseInt(pFinal.g2) ? pFinal.t1 : pFinal.t2;
-        if(!ganador.n.includes("Ganador")) {
-            const banner = document.getElementById("campeon-banner");
-            banner.innerHTML = `🏆 ¡CAMPEÓN DEL MUNDO 2026: ${ganador.f} ${ganador.n}! 🏆`;
-            banner.style.display = "block";
-            return;
-        }
-    }
-    document.getElementById("campeon-banner").style.display = "none";
-}
-
-function encadenarRonda(rondaAnterior, totalPartidos, prefijoSig) {
-    let nuevaRonda = [];
-    for (let i = 0; i < totalPartidos * 2; i += 2) {
-        let p1 = rondaAnterior[i]; let p2 = rondaAnterior[i+1];
-        let e1 = { n: `Ganador ${p1.id}`, f: "🏳️" }; let e2 = { n: `Ganador ${p2.id}`, f: "🏳️" };
-
-        if (p1 && p1.g1 !== "" && p1.g2 !== "" && p1.g1 !== p1.g2) e1 = parseInt(p1.g1) > parseInt(p1.g2) ? p1.t1 : p1.t2;
-        if (p2 && p2.g1 !== "" && p2.g2 !== "" && p2.g1 !== p2.g2) e2 = parseInt(p2.g1) > parseInt(p2.g2) ? p2.t1 : p2.t2;
-
-        nuevaRonda.push({ id: `${prefijoSig[0]}${i/2 + 1}`, label: `${prefijoSig} ${i/2 + 1}`, t1: e1, t2: e2, g1: "", g2: "" });
-    }
-    return nuevaRonda;
-}
-
-function dibujarColumnaDOM(idColumna, listaPartidos, claveRonda) {
-    const contenedor = document.getElementById(idColumna).querySelector(".col-content");
-    contenedor.innerHTML = listaPartidos.map((p, idx) => `
-        <div class="match-box">
-            <div class="match-box-title">${p.label}</div>
-            <div class="match-team-row">
-                <span>${p.t1.f} ${p.t1.n}</span>
-                <input type="number" min="0" value="${p.g1}" oninput="capturarGolPlayoff('${claveRonda}', ${idx}, 1, this.value)">
-            </div>
-            <div class="match-team-row">
-                <span>${p.t2.f} ${p.t2.n}</span>
-                <input type="number" min="0" value="${p.g2}" oninput="capturarGolPlayoff('${claveRonda}', ${idx}, 2, this.value)">
-            </div>
-        </div>`).join('');
-}
-
-function capturarGolPlayoff(ronda, indexPartido, equipoNum, valor) {
-    if (equipoNum === 1) datosFaseFinal[ronda][indexPartido].g1 = valor;
-    if (equipoNum === 2) datosFaseFinal[ronda][indexPartido].g2 = valor;
-    actualizarArbolVisual();
-}
-
-// Inicializar la estructura de datos y llamar a la API automáticamente
-window.onload = () => { 
-    generarEstructuraHTML(); 
-    cargarResultadosDesdeAPI(); 
-};
-</script>
-
-</body></html>
+        renderFavoritos();
+    </script>
+</body>
+</html>
